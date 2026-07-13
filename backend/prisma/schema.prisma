@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +5,274 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model destinations {
+  id         BigInt       @id @default(autoincrement())
+  province   String       @db.VarChar(100)
+  city       String       @db.VarChar(100)
+  created_at DateTime?    @default(now()) @db.Timestamp(6)
+  properties properties[]
+
+  @@unique([city, province], map: "uq_destination")
+  @@index([city], map: "idx_destination_city")
+}
+
+model email_verifications {
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
+  token      String    @unique(map: "uq_email_verification_token")
+  expires_at DateTime  @db.Timestamp(6)
+  used_at    DateTime? @db.Timestamp(6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_email_user")
+}
+
+model password_resets {
+  id         BigInt    @id @default(autoincrement())
+  user_id    BigInt
+  token      String    @unique(map: "uq_password_reset_token")
+  expires_at DateTime  @db.Timestamp(6)
+  used_at    DateTime? @db.Timestamp(6)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_password_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model payments {
+  id             BigInt          @id @default(autoincrement())
+  reservation_id BigInt          @unique
+  payment_method String          @db.VarChar(50)
+  payment_amount Decimal         @db.Decimal(12, 2)
+  proof_image    String?
+  status         payment_status? @default(PENDING)
+  paid_at        DateTime?       @db.Timestamp(6)
+  created_at     DateTime?       @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?       @default(now()) @db.Timestamp(6)
+  reservations   reservations    @relation(fields: [reservation_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_payment_reservation")
+
+  @@index([status], map: "idx_payment_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model peak_season_rates {
+  id               BigInt          @id @default(autoincrement())
+  room_id          BigInt
+  start_date       DateTime        @db.Date
+  end_date         DateTime        @db.Date
+  adjustment_type  adjustment_type
+  adjustment_value Decimal         @db.Decimal(12, 2)
+  created_at       DateTime?       @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?       @default(now()) @db.Timestamp(6)
+  rooms            rooms           @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_peak_room")
+
+  @@index([start_date, end_date], map: "idx_peak_dates")
+  @@index([room_id], map: "idx_peak_room")
+}
+
+model properties {
+  id                  BigInt              @id @default(autoincrement())
+  tenant_id           BigInt
+  category_id         BigInt
+  destination_id      BigInt
+  name                String              @db.VarChar(150)
+  description         String?
+  address             String
+  latitude            Decimal?            @db.Decimal(10, 7)
+  longitude           Decimal?            @db.Decimal(10, 7)
+  check_in_time       DateTime?           @default(dbgenerated("'14:00:00'::time without time zone")) @db.Time(6)
+  check_out_time      DateTime?           @default(dbgenerated("'12:00:00'::time without time zone")) @db.Time(6)
+  created_at          DateTime?           @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?           @default(now()) @db.Timestamp(6)
+  deleted_at          DateTime?           @db.Timestamp(6)
+  property_categories property_categories @relation(fields: [category_id], references: [id], onUpdate: NoAction, map: "fk_property_category")
+  destinations        destinations        @relation(fields: [destination_id], references: [id], onUpdate: NoAction, map: "fk_property_destination")
+  users               users               @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_property_tenant")
+  property_images     property_images[]
+  reviews             reviews[]
+  rooms               rooms[]
+
+  @@index([category_id], map: "idx_property_category")
+  @@index([destination_id], map: "idx_property_destination")
+  @@index([name], map: "idx_property_name")
+  @@index([tenant_id], map: "idx_property_tenant")
+}
+
+model property_categories {
+  id         BigInt       @id @default(autoincrement())
+  name       String       @unique @db.VarChar(100)
+  created_at DateTime?    @default(now()) @db.Timestamp(6)
+  properties properties[]
+}
+
+model property_images {
+  id            BigInt     @id @default(autoincrement())
+  property_id   BigInt
+  image_url     String
+  created_at    DateTime?  @default(now()) @db.Timestamp(6)
+  display_order Int        @default(1)
+  properties    properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_property_images")
+
+  @@index([property_id], map: "idx_property_images_property")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reservations {
+  id                     BigInt              @id @default(autoincrement())
+  booking_code           String              @unique @db.VarChar(30)
+  user_id                BigInt
+  room_id                BigInt
+  check_in               DateTime            @db.Date
+  check_out              DateTime            @db.Date
+  guest_count            Int
+  room_price             Decimal             @db.Decimal(12, 2)
+  peak_season_adjustment Decimal?            @default(0) @db.Decimal(12, 2)
+  total_price            Decimal             @db.Decimal(12, 2)
+  status                 reservation_status? @default(WAITING_PAYMENT)
+  booking_expired_at     DateTime            @db.Timestamp(6)
+  confirmed_at           DateTime?           @db.Timestamp(6)
+  cancelled_at           DateTime?           @db.Timestamp(6)
+  completed_at           DateTime?           @db.Timestamp(6)
+  created_at             DateTime?           @default(now()) @db.Timestamp(6)
+  updated_at             DateTime?           @default(now()) @db.Timestamp(6)
+  payments               payments?
+  rooms                  rooms               @relation(fields: [room_id], references: [id], onUpdate: NoAction, map: "fk_reservation_room")
+  users                  users               @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_reservation_user")
+  reviews                reviews?
+
+  @@index([booking_code], map: "idx_booking_code")
+  @@index([check_in, check_out], map: "idx_reservation_dates")
+  @@index([room_id], map: "idx_reservation_room")
+  @@index([status], map: "idx_reservation_status")
+  @@index([user_id], map: "idx_reservation_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reviews {
+  id             BigInt       @id @default(autoincrement())
+  reservation_id BigInt       @unique
+  property_id    BigInt
+  user_id        BigInt
+  rating         Int
+  comment        String?
+  tenant_reply   String?
+  replied_at     DateTime?    @db.Timestamp(6)
+  created_at     DateTime?    @default(now()) @db.Timestamp(6)
+  updated_at     DateTime?    @default(now()) @db.Timestamp(6)
+  properties     properties   @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_review_property")
+  reservations   reservations @relation(fields: [reservation_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_review_reservation")
+  users          users        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_review_user")
+
+  @@index([property_id], map: "idx_review_property")
+  @@index([rating], map: "idx_review_rating")
+  @@index([user_id], map: "idx_review_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model room_availabilities {
+  id              BigInt    @id @default(autoincrement())
+  room_id         BigInt
+  available_date  DateTime  @db.Date
+  available_rooms Int
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+  is_closed       Boolean?  @default(false)
+  updated_at      DateTime? @default(now()) @db.Timestamp(6)
+  closure_reason  String?
+  rooms           rooms     @relation(fields: [room_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_availability_room")
+
+  @@unique([room_id, available_date], map: "uq_room_date")
+  @@index([room_id], map: "idx_room_availability")
+  @@index([available_date], map: "idx_room_availability_date")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model rooms {
+  id                  BigInt                @id @default(autoincrement())
+  property_id         BigInt
+  room_name           String                @db.VarChar(100)
+  description         String?
+  capacity            Int
+  base_price          Decimal               @db.Decimal(12, 2)
+  total_rooms         Int
+  created_at          DateTime?             @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?             @default(now()) @db.Timestamp(6)
+  deleted_at          DateTime?             @db.Timestamp(6)
+  peak_season_rates   peak_season_rates[]
+  reservations        reservations[]
+  room_availabilities room_availabilities[]
+  properties          properties            @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_room_property")
+
+  @@unique([property_id, room_name], map: "uq_room_name")
+  @@index([room_name], map: "idx_room_name")
+  @@index([base_price], map: "idx_room_price")
+  @@index([property_id], map: "idx_room_property")
+}
+
+model tenant_profiles {
+  id                    BigInt    @id @default(autoincrement())
+  user_id               BigInt    @unique
+  company_name          String    @db.VarChar(150)
+  identity_number       String    @db.VarChar(50)
+  tax_number            String?   @db.VarChar(50)
+  bank_name             String?   @db.VarChar(100)
+  bank_account_name     String?   @db.VarChar(100)
+  bank_account_number   String?   @db.VarChar(50)
+  created_at            DateTime? @default(now()) @db.Timestamp(6)
+  updated_at            DateTime? @default(now()) @db.Timestamp(6)
+  identity_document_url String?
+  users                 users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tenant_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id                  BigInt                @id @default(autoincrement())
+  full_name           String                @db.VarChar(100)
+  email               String                @unique @db.VarChar(255)
+  password            String?               @db.VarChar(255)
+  role                user_role
+  provider            auth_provider         @default(EMAIL)
+  phone_number        String?               @db.VarChar(20)
+  profile_picture     String?
+  is_verified         Boolean?              @default(false)
+  created_at          DateTime?             @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?             @default(now()) @db.Timestamp(6)
+  email_verifications email_verifications[]
+  password_resets     password_resets[]
+  properties          properties[]
+  reservations        reservations[]
+  reviews             reviews[]
+  tenant_profiles     tenant_profiles?
+
+  @@index([email], map: "idx_users_email")
+}
+
+enum adjustment_type {
+  PERCENTAGE
+  FIXED
+}
+
+enum auth_provider {
+  EMAIL
+  GOOGLE
+  FACEBOOK
+}
+
+enum payment_status {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum reservation_status {
+  WAITING_PAYMENT
+  WAITING_CONFIRMATION
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  EXPIRED
+}
+
+enum user_role {
+  CUSTOMER
+  TENANT
 }
