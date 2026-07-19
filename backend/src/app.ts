@@ -1,9 +1,8 @@
-import "dotenv/config";
-
-import cors from "cors";
 import express from "express";
+import cors from "cors";
 
 import routes from "./routes";
+import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
 
@@ -14,5 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use("/api", routes);
+
+app.use(errorMiddleware);
 
 export default app;
