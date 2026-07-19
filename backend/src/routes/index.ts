@@ -1,4 +1,5 @@
 import { Router } from "express";
+import authRouter from "./auth.route";
 
 const router = Router();
 
@@ -12,5 +13,11 @@ router.get("/health", (_req, res) => {
     message: "Property App API is running 🚀",
   });
 });
+
+/**
+ * Authentication Routes
+ * Base URL: /api/auth
+ */
+router.use("/auth", authRouter);
 
 export default router;
