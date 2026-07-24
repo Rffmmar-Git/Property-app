@@ -14,6 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api", routes);
 
+// Global Error Handler
 app.use(errorMiddleware);
 
 export default app;
