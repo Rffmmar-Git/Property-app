@@ -1,5 +1,6 @@
 import { Router } from "express";
 import authRouter from "./auth.route";
+import propertyRouter from "./property.route";
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.get("/health", (_req, res) => {
  * Base URL: /api/auth
  */
 router.use("/auth", authRouter);
+router.use("/properties", propertyRouter);
 
 export default router;
