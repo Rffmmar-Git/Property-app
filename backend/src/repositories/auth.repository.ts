@@ -11,7 +11,9 @@ export class AuthRepository {
     });
   }
 
-  async createUser(data: RegisterInput & { password: string }) {
+  async createUser(
+    data: RegisterInput & { password: string }
+  ) {
     return prisma.users.create({
       data: {
         full_name: data.fullName,

@@ -1,20 +1,23 @@
 import bcrypt from "bcrypt";
 import { authRepository } from "../repositories/auth.repository";
 import { ApiError } from "../utils/ApiError";
-import {
-  LoginInput,
-} from "../validations/login.validation";
+import { generateAccessToken } from "../utils/jwt";
+import { LoginInput } from "../validations/login.validation";
 import { RegisterInput } from "../validations/auth.validation";
 
 export class AuthService {
   async register(data: RegisterInput) {
-    const existingUser = await authRepository.findUserByEmail(data.email);
+    const existingUser =
+      await authRepository.findUserByEmail(data.email);
 
     if (existingUser) {
       throw new ApiError(409, "Email already exists");
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const hashedPassword = await bcrypt.hash(
+      data.password,
+      10
+    );
 
     const user = await authRepository.createUser({
       ...data,
@@ -30,10 +33,14 @@ export class AuthService {
   }
 
   async login(data: LoginInput) {
-    const user = await authRepository.findUserByEmail(data.email);
+    const user =
+      await authRepository.findUserByEmail(data.email);
 
     if (!user) {
-      throw new ApiError(401, "Invalid email or password");
+      throw new ApiError(
+        401,
+        "Invalid email or password"
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -42,14 +49,25 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new ApiError(401, "Invalid email or password");
+      throw new ApiError(
+        401,
+        "Invalid email or password"
+      );
     }
 
-    return {
-      id: user.id.toString(),
-      fullName: user.full_name,
-      email: user.email,
+    const accessToken = generateAccessToken({
+      userId: user.id.toString(),
       role: user.role,
+    });
+
+    return {
+      accessToken,
+      user: {
+        id: user.id.toString(),
+        fullName: user.full_name,
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 }

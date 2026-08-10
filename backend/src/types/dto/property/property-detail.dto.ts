@@ -1,0 +1,29 @@
+export interface PropertyDetailDto {
+  id: string;
+  name: string;
+  description: string | null;
+  address: string;
+
+  checkInTime: string | null;
+  checkOutTime: string | null;
+
+  category: string;
+
+  destination: {
+    city: string;
+    province: string;
+  };
+
+  images: {
+    imageUrl: string;
+    displayOrder: number;
+  }[];
+
+  rooms: {
+    id: string;
+    name: string;
+    description: string | null;
+    capacity: number;
+    basePrice: number;
+  }[];
+}

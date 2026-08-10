@@ -1,47 +1,69 @@
 import { propertyRepository } from "../repositories/property.repository";
-import { PropertyCardDto } from "../types/dto/property";
+import { mapPropertyListResponse } from "../helpers/property/property-card.mapper";
+import { mapPropertyDetail } from "../helpers/property/property-detail.mapper";
+import { ApiError } from "../utils/ApiError";
+import {
+  PropertyListResponseDto,
+  PropertyQueryDto,
+  PropertySortBy,
+  PropertySortOrder,
+} from "../types/dto/property";
 
 export class PropertyService {
-  async getAllProperties(): Promise<PropertyCardDto[]> {
-    const properties = await propertyRepository.findAllProperties();
+  async getAllProperties(
+    query: PropertyQueryDto
+  ): Promise<PropertyListResponseDto> {
+    const page =
+      query.page && query.page > 0 ? query.page : 1;
 
-    return properties.map((property) => {
-      const startingPrice =
-        property.rooms.length > 0
-          ? Math.min(
-              ...property.rooms.map((room) => Number(room.base_price))
-            )
-          : null;
+    const pageSize =
+      query.pageSize && query.pageSize > 0
+        ? Math.min(query.pageSize, 50)
+        : 10;
 
-      const reviewCount = property.reviews.length;
+    const allowedSortBy: PropertySortBy[] = [
+      "created_at",
+      "name",
+    ];
 
-      const rating =
-        reviewCount > 0
-          ? Number(
-              (
-                property.reviews.reduce(
-                  (total, review) => total + review.rating,
-                  0
-                ) / reviewCount
-              ).toFixed(1)
-            )
-          : 0;
+    const sortBy = allowedSortBy.includes(
+      query.sortBy as PropertySortBy
+    )
+      ? (query.sortBy as PropertySortBy)
+      : "created_at";
 
-      const thumbnail = property.property_images[0]?.image_url ?? null;
+    const order: PropertySortOrder =
+      query.order === "asc" || query.order === "desc"
+        ? query.order
+        : "desc";
 
-      return {
-        id: property.id.toString(),
-        name: property.name,
-        destination: {
-          city: property.destinations.city,
-          province: property.destinations.province,
-        },
-        thumbnail,
-        startingPrice,
-        rating,
-        reviewCount,
-      };
+    const { properties, totalItems } =
+      await propertyRepository.findAllProperties({
+        ...query,
+        page,
+        pageSize,
+        sortBy,
+        order,
+      });
+
+    return mapPropertyListResponse(properties, {
+      page,
+      pageSize,
+      totalItems,
+      totalPages: Math.ceil(totalItems / pageSize),
     });
+  }
+
+  async getPropertyById(id: string) {
+    const property = await propertyRepository.findPropertyById(
+      BigInt(id)
+    );
+
+    if (!property) {
+      throw new ApiError(404, "Property not found");
+    }
+
+    return mapPropertyDetail(property);
   }
 }
 
