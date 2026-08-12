@@ -1,45 +1,75 @@
 import bcrypt from "bcrypt";
 import { authRepository } from "../repositories/auth.repository";
-import { ApiError } from "../utils/ApiError";
-import { generateAccessToken } from "../utils/jwt";
-import { LoginInput } from "../validations/login.validation";
-import { RegisterInput } from "../validations/auth.validation";
+import { ApiError } from "../utils/core";
+import { generateAccessToken } from "../utils/auth";
+import { generateToken } from "../utils/auth";
+import { sendVerificationEmail } from "../utils/auth";
+import { LoginInput, RegisterInput } from "../validations/auth";
 
 export class AuthService {
   async register(data: RegisterInput) {
-    const existingUser =
-      await authRepository.findUserByEmail(data.email);
+    const existingUser = await authRepository.findUserByEmail(data.email);
 
     if (existingUser) {
       throw new ApiError(409, "Email already exists");
     }
 
-    const hashedPassword = await bcrypt.hash(
-      data.password,
-      10
-    );
+    const user = await authRepository.createUser(data);
 
-    const user = await authRepository.createUser({
-      ...data,
-      password: hashedPassword,
-    });
+    const token = generateToken();
+
+    await authRepository.createEmailVerification(user.id, token);
+
+    await sendVerificationEmail(user.email, token);
 
     return {
       id: user.id.toString(),
       fullName: user.full_name,
       email: user.email,
-      role: user.role,
+      isVerified: user.is_verified,
+    };
+  }
+
+  async verifyEmail(token: string, password: string) {
+    const verification =
+      await authRepository.findVerificationToken(token);
+
+    if (!verification) {
+      throw new ApiError(400, "Invalid verification token");
+    }
+
+    if (verification.used_at) {
+      throw new ApiError(400, "Verification token already used");
+    }
+
+    if (verification.expires_at < new Date()) {
+      throw new ApiError(400, "Verification token has expired");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await authRepository.verifyUser(
+      verification.user_id,
+      verification.id,
+      hashedPassword
+    );
+
+    return {
+      message: "Email verified successfully. Please login.",
     };
   }
 
   async login(data: LoginInput) {
-    const user =
-      await authRepository.findUserByEmail(data.email);
+    const user = await authRepository.findUserByEmail(data.email);
 
     if (!user) {
+      throw new ApiError(401, "Invalid email or password");
+    }
+
+    if (!user.is_verified) {
       throw new ApiError(
-        401,
-        "Invalid email or password"
+        403,
+        "Please verify your email before logging in"
       );
     }
 
@@ -49,10 +79,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new ApiError(
-        401,
-        "Invalid email or password"
-      );
+      throw new ApiError(401, "Invalid email or password");
     }
 
     const accessToken = generateAccessToken({

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { user_role } from "../generated/prisma/enums";
-import { ApiError } from "../utils/ApiError";
+import { ApiError } from "../utils/core/ApiError";
 
 export function authorize(...roles: user_role[]) {
   return (

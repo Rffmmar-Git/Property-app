@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { propertyService } from "../services/property.service";
-import { ApiResponse } from "../utils/ApiResponse";
-import { asyncHandler } from "../utils/AsyncHandler";
+import { ApiResponse } from "../utils/core/ApiResponse";
+import { asyncHandler } from "../utils/core/AsyncHandler";
 import { parsePropertyQuery } from "../helpers/property/property-query.helper";
 
 export class PropertyController {

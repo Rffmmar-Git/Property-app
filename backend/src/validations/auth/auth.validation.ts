@@ -12,6 +12,12 @@ export const registerSchema = z.object({
     .trim()
     .email("Invalid email address")
     .toLowerCase(),
+});
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const verifyEmailSchema = z.object({
+  token: z.string().min(1, "Token is required"),
 
   password: z
     .string()
@@ -23,4 +29,4 @@ export const registerSchema = z.object({
     ),
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;

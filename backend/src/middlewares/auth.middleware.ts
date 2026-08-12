@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyAccessToken } from "../utils/jwt";
-import { ApiError } from "../utils/ApiError";
+import { verifyAccessToken } from "../utils/auth/jwt";
+import { ApiError } from "../utils/core/ApiError";
 
 export function authenticate(
   req: Request,

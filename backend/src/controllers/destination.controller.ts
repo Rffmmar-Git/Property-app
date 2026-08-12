@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { destinationService } from "../services/destination.service";
-import { asyncHandler } from "../utils/AsyncHandler";
-import { ApiResponse } from "../utils/ApiResponse";
+import { asyncHandler } from "../utils/core/AsyncHandler";
+import { ApiResponse } from "../utils/core/ApiResponse";
 
 export class DestinationController {
   getAllDestinations = asyncHandler(

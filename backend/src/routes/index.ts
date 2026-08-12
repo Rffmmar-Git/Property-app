@@ -19,6 +19,10 @@ router.get("/health", (_req, res) => {
   });
 });
 
+/**
+ * Current authenticated user 
+ * GET /api/me 
+ */
 router.get(
   "/me",
   authenticate,

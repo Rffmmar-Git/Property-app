@@ -1,7 +1,7 @@
 import { propertyRepository } from "../repositories/property.repository";
 import { mapPropertyListResponse } from "../helpers/property/property-card.mapper";
 import { mapPropertyDetail } from "../helpers/property/property-detail.mapper";
-import { ApiError } from "../utils/ApiError";
+import { ApiError } from "../utils/core/ApiError";
 import {
   PropertyListResponseDto,
   PropertyQueryDto,
