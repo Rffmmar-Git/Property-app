@@ -2,25 +2,28 @@ import prisma from "../config/prisma";
 import {
   Prisma,
   reservations,
-  reservation_status,
+  reservation_status,payment_status
 } from "../generated/prisma/client";
 import { ReservationComplete } from "../types/prisma";
 
 export class ReservationRepository {
-  /**
-   * Create reservation.
-   */
+//  Create reservation.
   async create(
-    data: Prisma.reservationsCreateInput
-  ): Promise<reservations> {
-    return prisma.reservations.create({
-      data,
-    });
-  }
-
-  /**
-   * Find reservation by id.
-   */
+  data: Prisma.reservationsCreateInput
+): Promise<reservations> {
+  return prisma.reservations.create({
+    data,
+  });
+}
+async createWithTransaction(
+  tx: Prisma.TransactionClient,
+  data: Prisma.reservationsCreateInput
+): Promise<reservations> {
+  return tx.reservations.create({
+    data,
+  });
+}
+  // Find reservation by id.
   async findById(
     reservationId: number
   ): Promise<reservations | null> {
@@ -30,10 +33,7 @@ export class ReservationRepository {
       },
     });
   }
-
-  /**
-   * Find reservation with all required relations.
-   */
+// Find reservation with all required relations.
   async findCompleteById(
     reservationId: number
   ): Promise<ReservationComplete | null> {
@@ -58,9 +58,35 @@ export class ReservationRepository {
     });
   }
 
-  /**
-   * Find reservation by booking code.
-   */
+  async findCompleteManyByUserId(
+  userId: number
+): Promise<ReservationComplete[]> {
+  return prisma.reservations.findMany({
+    where: {
+      user_id: BigInt(userId),
+    },
+
+    include: {
+      users: true,
+
+      rooms: {
+        include: {
+          properties: true,
+        },
+      },
+
+      payments: true,
+
+      reviews: true,
+    },
+
+    orderBy: {
+      created_at: "desc",
+    },
+  });
+}
+
+// Find reservation by booking code.
   async findByBookingCode(
     bookingCode: string
   ): Promise<reservations | null> {
@@ -70,10 +96,7 @@ export class ReservationRepository {
       },
     });
   }
-
-  /**
-   * Find all reservations by user.
-   */
+// Find all reservations by user.
   async findManyByUserId(
     userId: number
   ): Promise<reservations[]> {
@@ -88,9 +111,7 @@ export class ReservationRepository {
     });
   }
 
-  /**
-   * Find reservations by user and status.
-   */
+// Find reservations by user and status.
   async findManyByUserIdAndStatus(
     userId: number,
     status: reservation_status
@@ -107,9 +128,7 @@ export class ReservationRepository {
     });
   }
 
-  /**
-   * Update reservation status.
-   */
+// Update reservation status.
   async updateStatus(
     reservationId: number,
     status: reservation_status
@@ -125,9 +144,7 @@ export class ReservationRepository {
     });
   }
 
-  /**
-   * Update booking expired time.
-   */
+//  Update booking expired time.
   async updateBookingExpiredAt(
     reservationId: number,
     bookingExpiredAt: Date
@@ -143,9 +160,7 @@ export class ReservationRepository {
     });
   }
 
-  /**
-   * Update confirmed time.
-   */
+//   Update confirmed time.
   async updateConfirmedAt(
     reservationId: number,
     confirmedAt: Date
@@ -161,9 +176,7 @@ export class ReservationRepository {
     });
   }
 
-  /**
-   * Update cancelled time.
-   */
+// Update cancelled time.
   async updateCancelledAt(
     reservationId: number,
     cancelledAt: Date
@@ -179,9 +192,7 @@ export class ReservationRepository {
     });
   }
 
-  /**
-   * Update completed time.
-   */
+// Update completed time.
   async updateCompletedAt(
     reservationId: number,
     completedAt: Date
@@ -196,4 +207,32 @@ export class ReservationRepository {
       },
     });
   }
+
+  async cancelReservation(
+  reservationId: number,
+  reservationData: Prisma.reservationsUpdateInput
+): Promise<reservations> {
+  return prisma.reservations.update({
+    where: {
+      id: BigInt(reservationId),
+    },
+    data: reservationData,
+  });
 }
+
+async cancelReservationWithTransaction(
+  tx: Prisma.TransactionClient,
+  reservationId: number
+): Promise<reservations> {
+  return tx.reservations.update({
+    where: {
+      id: BigInt(reservationId),
+    },
+    data: {
+      status: reservation_status.CANCELLED,
+      cancelled_at: new Date(),
+    },
+  });
+}
+}
+
