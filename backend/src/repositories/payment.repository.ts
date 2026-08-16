@@ -17,6 +17,15 @@ export class PaymentRepository {
     });
   }
 
+  async createWithTransaction(
+  tx: Prisma.TransactionClient,
+  data: Prisma.paymentsCreateInput
+): Promise<payments> {
+  return tx.payments.create({
+    data,
+  });
+}
+
   /**
    * Find payment by reservation id.
    */
