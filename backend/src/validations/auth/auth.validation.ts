@@ -25,8 +25,9 @@ export const verifyEmailSchema = z.object({
     .max(100, "Password must not exceed 100 characters")
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
-      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-    ),
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+    )
+    .optional(),
 });
 
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;

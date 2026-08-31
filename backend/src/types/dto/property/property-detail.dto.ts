@@ -1,10 +1,14 @@
 export interface PropertyDetailDto {
   id: string;
+
   name: string;
+
   description: string | null;
+
   address: string;
 
   checkInTime: string | null;
+
   checkOutTime: string | null;
 
   category: string;
@@ -25,5 +29,11 @@ export interface PropertyDetailDto {
     description: string | null;
     capacity: number;
     basePrice: number;
+  }[];
+
+  priceCalendar: {
+    date: string;
+    price: number | null;
+    available: boolean;
   }[];
 }

@@ -44,7 +44,36 @@ export async function sendVerificationEmail(
          ">
          Verify Email
       </a>
-      <p>This link will expire in 1 hour.</p>
+      <p>This link will expire in 15 minutes.</p>
+    `,
+  });
+}
+
+export async function sendResetPasswordEmail(
+  email: string,
+  token: string
+) {
+  const resetUrl =
+    `http://localhost:5173/reset-password?token=${token}`;
+
+  await sendMail({
+    to: email,
+    subject: "Reset your password",
+    html: `
+      <h2>Reset Password</h2>
+      <p>Click the button below to reset your password.</p>
+      <a href="${resetUrl}"
+         style="
+           display:inline-block;
+           padding:12px 20px;
+           background:#dc2626;
+           color:white;
+           text-decoration:none;
+           border-radius:8px;
+         ">
+         Reset Password
+      </a>
+      <p>This link will expire in 15 minutes and can only be used once.</p>
     `,
   });
 }

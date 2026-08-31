@@ -12,6 +12,9 @@ const requiredEnv = [
   "SMTP_USER",
   "SMTP_PASS",
   "SMTP_FROM",
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
+  "GOOGLE_CALLBACK_URL",
 ] as const;
 
 for (const key of requiredEnv) {
@@ -45,4 +48,10 @@ export const env = {
   SMTP_PASS: process.env.SMTP_PASS,
 
   SMTP_FROM: process.env.SMTP_FROM,
+
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+
+  GOOGLE_CALLBACK_URL: process.env.GOOGLE_CALLBACK_URL,
 };

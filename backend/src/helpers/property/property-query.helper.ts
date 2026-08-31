@@ -23,6 +23,12 @@ export function parsePropertyQuery(
 
     category: req.query.category as string | undefined,
 
+    checkIn: req.query.checkIn as string | undefined,
+
+    duration: req.query.duration
+      ? Number(req.query.duration)
+      : undefined,
+
     sortBy:
       req.query.sortBy as PropertySortBy | undefined,
 

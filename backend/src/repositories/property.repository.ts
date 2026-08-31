@@ -69,10 +69,75 @@ export class PropertyRepository {
             description: true,
             capacity: true,
             base_price: true,
+            total_rooms: true,
+
+            room_availabilities: {
+              select: {
+                available_date: true,
+                available_rooms: true,
+                is_closed: true,
+              },
+            },
+
+            reservations: {
+              where: {
+                status: {
+                  in: [
+                    "WAITING_PAYMENT",
+                    "WAITING_CONFIRMATION",
+                    "CONFIRMED",
+                  ],
+                },
+              },
+
+              select: {
+                check_in: true,
+                check_out: true,
+                status: true,
+              },
+            },
+
+            peak_season_rates: {
+              select: {
+                start_date: true,
+                end_date: true,
+                adjustment_type: true,
+                adjustment_value: true,
+              },
+            },
           },
         },
       },
     });
+  }
+
+  private getDateRange(query: PropertyQueryDto) {
+    if (
+      !query.checkIn ||
+      !query.duration ||
+      query.duration <= 0
+    ) {
+      return null;
+    }
+
+    const checkIn = new Date(
+      `${query.checkIn}T00:00:00.000Z`,
+    );
+
+    if (Number.isNaN(checkIn.getTime())) {
+      return null;
+    }
+
+    const checkOut = new Date(checkIn);
+
+    checkOut.setUTCDate(
+      checkOut.getUTCDate() + query.duration,
+    );
+
+    return {
+      checkIn,
+      checkOut,
+    };
   }
 
   private buildWhereClause(
@@ -113,8 +178,15 @@ export class PropertyRepository {
   private buildOrderBy(
     query: PropertyQueryDto,
   ): Prisma.propertiesOrderByWithRelationInput {
+    if (query.sortBy === "price") {
+      return {
+        created_at: "desc",
+      };
+    }
+
     return {
-      [query.sortBy ?? "created_at"]: query.order ?? "desc",
+      [query.sortBy ?? "created_at"]:
+        query.order ?? "desc",
     };
   }
 
@@ -123,11 +195,22 @@ export class PropertyRepository {
     where: Prisma.propertiesWhereInput,
     orderBy: Prisma.propertiesOrderByWithRelationInput,
   ) {
+    const dateRange = this.getDateRange(query);
+
+    const isPriceSorting = query.sortBy === "price";
+
     return prisma.properties.findMany({
       where,
       orderBy,
-      skip: ((query.page ?? 1) - 1) * (query.pageSize ?? 10),
-      take: query.pageSize ?? 10,
+
+      skip: isPriceSorting
+        ? undefined
+        : ((query.page ?? 1) - 1) *
+          (query.pageSize ?? 10),
+
+      take: isPriceSorting
+        ? undefined
+        : query.pageSize ?? 10,
 
       select: {
         id: true,
@@ -157,8 +240,96 @@ export class PropertyRepository {
         },
 
         rooms: {
+          where: {
+            deleted_at: null,
+
+            ...(dateRange
+              ? {
+                  room_availabilities: {
+                    none: {
+                      is_closed: true,
+
+                      available_date: {
+                        gte: dateRange.checkIn,
+                        lt: dateRange.checkOut,
+                      },
+                    },
+                  },
+                }
+              : {}),
+          },
+
           select: {
+            id: true,
             base_price: true,
+            total_rooms: true,
+
+            room_availabilities: {
+              where: dateRange
+                ? {
+                    available_date: {
+                      gte: dateRange.checkIn,
+                      lt: dateRange.checkOut,
+                    },
+                  }
+                : undefined,
+
+              select: {
+                available_date: true,
+                available_rooms: true,
+                is_closed: true,
+              },
+            },
+
+            reservations: {
+              where: dateRange
+                ? {
+                    status: {
+                      in: [
+                        "WAITING_PAYMENT",
+                        "WAITING_CONFIRMATION",
+                        "CONFIRMED",
+                      ],
+                    },
+
+                    check_in: {
+                      lt: dateRange.checkOut,
+                    },
+
+                    check_out: {
+                      gt: dateRange.checkIn,
+                    },
+                  }
+                : undefined,
+
+              select: {
+                check_in: true,
+                check_out: true,
+                guest_count: true,
+                status: true,
+              },
+            },
+
+            peak_season_rates: {
+              where: dateRange
+                ? {
+                    start_date: {
+                      lt: dateRange.checkOut,
+                    },
+
+                    end_date: {
+                      gte: dateRange.checkIn,
+                    },
+                  }
+                : undefined,
+
+              select: {
+                start_date: true,
+                end_date: true,
+                adjustment_type: true,
+                adjustment_value: true,
+              },
+            },
           },
         },
 
@@ -171,11 +342,14 @@ export class PropertyRepository {
     });
   }
 
-  private countProperties(where: Prisma.propertiesWhereInput) {
+  private countProperties(
+    where: Prisma.propertiesWhereInput,
+  ) {
     return prisma.properties.count({
       where,
     });
   }
 }
 
-export const propertyRepository = new PropertyRepository();
+export const propertyRepository =
+  new PropertyRepository();

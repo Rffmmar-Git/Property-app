@@ -31,6 +31,12 @@ type PropertyDetailSource = {
     capacity: number;
     base_price: Prisma.Decimal;
   }[];
+
+  priceCalendar: {
+    date: string;
+    price: number | null;
+    available: boolean;
+  }[];
 };
 
 export function mapPropertyDetail(
@@ -42,8 +48,11 @@ export function mapPropertyDetail(
     description: property.description,
     address: property.address,
 
-    checkInTime: property.check_in_time?.toISOString() ?? null,
-    checkOutTime: property.check_out_time?.toISOString() ?? null,
+    checkInTime:
+      property.check_in_time?.toISOString() ?? null,
+
+    checkOutTime:
+      property.check_out_time?.toISOString() ?? null,
 
     category: property.property_categories.name,
 
@@ -64,5 +73,7 @@ export function mapPropertyDetail(
       capacity: room.capacity,
       basePrice: Number(room.base_price),
     })),
+
+    priceCalendar: property.priceCalendar,
   };
 }
