@@ -30,6 +30,13 @@ export interface PropertyListResponse {
 export interface GetPropertiesParams {
   page?: number;
   pageSize?: number;
+  search?: string;
+  category?: string;
+  city?: string;
+  checkIn?: string;
+  duration?: number;
+  sortBy?: "created_at" | "name" | "price";
+  order?: "asc" | "desc";
 }
 
 export const getProperties = async (
@@ -43,6 +50,13 @@ export const getProperties = async (
     params: {
       page: params.page ?? 1,
       pageSize: params.pageSize ?? 12,
+      search: params.search || undefined,
+      category: params.category || undefined,
+      city: params.city || undefined,
+      checkIn: params.checkIn || undefined,
+      duration: params.duration || undefined,
+      sortBy: params.sortBy || undefined,
+      order: params.order || undefined,
     },
   });
 

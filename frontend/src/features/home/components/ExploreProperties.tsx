@@ -8,7 +8,7 @@ export default function ExploreProperties() {
     data,
     isLoading,
     isError,
-  } = useFeaturedProperties();
+  } = useFeaturedProperties(8);
 
   const properties = data?.items ?? [];
 
@@ -65,7 +65,7 @@ export default function ExploreProperties() {
         {/* Loading */}
         {isLoading && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
+            {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
                 className="overflow-hidden rounded-lg border border-slate-200 bg-white"
@@ -96,22 +96,25 @@ export default function ExploreProperties() {
         )}
 
         {/* Empty */}
-        {!isLoading && !isError && properties.length === 0 && (
-          <div className="rounded-lg border border-slate-200 bg-white px-5 py-12 text-center">
-            <p className="text-sm font-medium text-slate-text">
-              No properties available
-            </p>
+        {!isLoading &&
+          !isError &&
+          properties.length === 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white px-5 py-12 text-center">
+              <p className="text-sm font-medium text-slate-text">
+                No properties available
+              </p>
 
-            <p className="mt-1 text-xs text-slate-muted">
-              There are currently no properties available to
-              display.
-            </p>
-          </div>
-        )}
+              <p className="mt-1 text-xs text-slate-muted">
+                There are currently no properties available
+                to display.
+              </p>
+            </div>
+          )}
 
         {/* Real properties */}
-        {!isLoading && !isError && properties.length > 0 && (
-          <>
+        {!isLoading &&
+          !isError &&
+          properties.length > 0 && (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {properties.map((property) => (
                 <HomePropertyCard
@@ -120,34 +123,7 @@ export default function ExploreProperties() {
                 />
               ))}
             </div>
-
-            {/* Pagination preview */}
-            {data && data.pagination.totalPages > 1 && (
-              <div className="mt-7 flex items-center justify-center gap-1.5">
-                <button
-                  type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded border border-outline-variant text-slate-muted hover:bg-white"
-                >
-                  ‹
-                </button>
-
-                <button
-                  type="button"
-                  className="h-8 w-8 rounded bg-midnight-indigo text-[10px] font-semibold text-white"
-                >
-                  1
-                </button>
-
-                <button
-                  type="button"
-                  className="flex h-8 w-8 items-center justify-center rounded border border-outline-variant text-slate-muted hover:bg-white"
-                >
-                  ›
-                </button>
-              </div>
-            )}
-          </>
-        )}
+          )}
       </div>
     </section>
   );

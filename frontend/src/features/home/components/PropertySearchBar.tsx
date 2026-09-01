@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+import { useFeaturedProperties } from "../hooks/useFeaturedProperties";
+
 export default function PropertySearchBar() {
   const navigate = useNavigate();
 
@@ -14,11 +16,35 @@ export default function PropertySearchBar() {
   const [checkIn, setCheckIn] = useState("");
   const [nights, setNights] = useState("1");
 
+  const { data } = useFeaturedProperties(100);
+
+  const destinations = Array.from(
+    new Map(
+      (data?.items ?? [])
+        .filter(
+          (property) =>
+            property.destination.city &&
+            property.destination.province,
+        )
+        .map((property) => {
+          const value = `${property.destination.city}, ${property.destination.province}`;
+
+          return [
+            value,
+            {
+              city: property.destination.city,
+              province: property.destination.province,
+            },
+          ];
+        }),
+    ).values(),
+  );
+
   const handleSearch = () => {
     const params = new URLSearchParams();
 
-    if (destination.trim()) {
-      params.set("destination", destination.trim());
+    if (destination) {
+      params.set("city", destination);
     }
 
     if (checkIn) {
@@ -26,7 +52,7 @@ export default function PropertySearchBar() {
     }
 
     if (nights) {
-      params.set("nights", nights);
+      params.set("duration", nights);
     }
 
     navigate(
@@ -44,21 +70,40 @@ export default function PropertySearchBar() {
           Destination
         </label>
 
-        <div className="flex h-9 items-center rounded border border-outline-variant px-2.5">
+        <div className="relative">
           <MapPin
             size={14}
-            className="mr-2 shrink-0 text-slate-muted"
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-muted"
           />
 
-          <input
-            type="text"
+          <select
             value={destination}
             onChange={(event) =>
               setDestination(event.target.value)
             }
-            placeholder="Where are you going?"
-            className="min-w-0 flex-1 bg-transparent text-[10px] text-slate-text outline-none placeholder:text-slate-muted"
-          />
+            className="h-9 w-full appearance-none rounded border border-outline-variant bg-white pl-8 pr-7 text-[10px] text-slate-text outline-none"
+          >
+            <option value="">
+              Where are you going?
+            </option>
+
+            {destinations.map((item) => {
+              const value = `${item.city}, ${item.province}`;
+
+              return (
+                <option
+                  key={value}
+                  value={item.city}
+                >
+                  {value}
+                </option>
+              );
+            })}
+          </select>
+
+          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-muted">
+            ▾
+          </span>
         </div>
       </div>
 

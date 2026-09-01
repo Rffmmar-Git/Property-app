@@ -1,15 +1,35 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import HomeNavbar from "../../features/home/components/HomeNavbar";
 import PropertyCard from "../../features/property/components/PropertyCard";
 import PropertyListingFilter from "../../features/property/components/PropertyListingFilter";
 import { useProperties } from "../../features/property/hooks/useProperties";
+import { usePropertyCategories } from "../../features/property/hooks/usePropertyCategories";
 
 const PAGE_SIZE = 12;
 
 export default function PropertyListingPage() {
+  const [searchParams] = useSearchParams();
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [sortBy, setSortBy] = useState<
+    "created_at" | "name" | "price"
+  >("created_at");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+
+  const city = searchParams.get("city") || undefined;
+  const checkIn = searchParams.get("checkIn") || undefined;
+
+  const durationParam = searchParams.get("duration");
+  const duration = durationParam
+    ? Number(durationParam)
+    : undefined;
+
+  const { data: categories = [] } =
+    usePropertyCategories();
 
   const {
     data,
@@ -19,6 +39,13 @@ export default function PropertyListingPage() {
   } = useProperties({
     page,
     pageSize: PAGE_SIZE,
+    search: search || undefined,
+    category: category || undefined,
+    city,
+    checkIn,
+    duration,
+    sortBy,
+    order,
   });
 
   const properties = data?.items ?? [];
@@ -26,6 +53,20 @@ export default function PropertyListingPage() {
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
+    setPage(1);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategory(value);
+    setPage(1);
+  };
+
+  const handleSortChange = (
+    newSortBy: "created_at" | "name" | "price",
+    newOrder: "asc" | "desc",
+  ) => {
+    setSortBy(newSortBy);
+    setOrder(newOrder);
     setPage(1);
   };
 
@@ -52,7 +93,13 @@ export default function PropertyListingPage() {
       <main className="mx-auto w-full max-w-[1400px] flex-1 px-5 py-6 sm:px-6 lg:px-8">
         <PropertyListingFilter
           search={search}
+          category={category}
+          categories={categories}
+          sortBy={sortBy}
+          order={order}
           onSearchChange={handleSearchChange}
+          onCategoryChange={handleCategoryChange}
+          onSortChange={handleSortChange}
         />
 
         <div className="mb-5 mt-6 flex items-center justify-between">
@@ -124,7 +171,7 @@ export default function PropertyListingPage() {
 
               <p className="mt-2 text-sm text-slate-muted">
                 There are currently no properties available
-                for this page.
+                for this search.
               </p>
             </div>
           )}

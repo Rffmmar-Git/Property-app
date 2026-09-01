@@ -12,7 +12,7 @@ import { Prisma } from "../generated/prisma/client";
 
 export class PropertyService {
   async getAllProperties(
-    query: PropertyQueryDto
+    query: PropertyQueryDto,
   ): Promise<PropertyListResponseDto> {
     const page =
       query.page && query.page > 0 ? query.page : 1;
@@ -29,7 +29,7 @@ export class PropertyService {
     ];
 
     const sortBy = allowedSortBy.includes(
-      query.sortBy as PropertySortBy
+      query.sortBy as PropertySortBy,
     )
       ? (query.sortBy as PropertySortBy)
       : "created_at";
@@ -50,6 +50,9 @@ export class PropertyService {
 
     const dateRange = this.getDateRange(query);
 
+    const requiresPostProcessing =
+      dateRange !== null || sortBy === "price";
+
     let processedProperties = dateRange
       ? properties
           .map((property) => {
@@ -58,15 +61,15 @@ export class PropertyService {
                 this.isRoomAvailable(
                   room,
                   dateRange.checkIn,
-                  dateRange.checkOut
-                )
+                  dateRange.checkOut,
+                ),
               )
               .map((room) => ({
                 base_price:
                   this.calculateEffectivePrice(
                     room,
                     dateRange.checkIn,
-                    dateRange.checkOut
+                    dateRange.checkOut,
                   ),
               }));
 
@@ -76,43 +79,49 @@ export class PropertyService {
             };
           })
           .filter(
-            (property) => property.rooms.length > 0
+            (property) => property.rooms.length > 0,
           )
       : properties;
 
     if (sortBy === "price") {
-      processedProperties = [...processedProperties].sort(
-        (a, b) => {
-          const priceA =
-            a.rooms.length > 0
-              ? Number(a.rooms[0].base_price)
-              : Infinity;
+      processedProperties = [
+        ...processedProperties,
+      ].sort((a, b) => {
+        const priceA = this.getLowestRoomPrice(
+          a.rooms,
+        );
 
-          const priceB =
-            b.rooms.length > 0
-              ? Number(b.rooms[0].base_price)
-              : Infinity;
+        const priceB = this.getLowestRoomPrice(
+          b.rooms,
+        );
 
-          return order === "asc"
-            ? priceA - priceB
-            : priceB - priceA;
-        },
-      );
+        return order === "asc"
+          ? priceA - priceB
+          : priceB - priceA;
+      });
     }
 
+    const finalTotalItems = requiresPostProcessing
+      ? processedProperties.length
+      : totalItems;
+
+    const paginatedProperties =
+      requiresPostProcessing
+        ? processedProperties.slice(
+            (page - 1) * pageSize,
+            page * pageSize,
+          )
+        : processedProperties;
+
     return mapPropertyListResponse(
-      processedProperties,
+      paginatedProperties,
       {
         page,
         pageSize,
-        totalItems: dateRange
-          ? processedProperties.length
-          : totalItems,
-        totalPages: dateRange
-          ? Math.ceil(
-              processedProperties.length / pageSize
-            )
-          : Math.ceil(totalItems / pageSize),
+        totalItems: finalTotalItems,
+        totalPages: Math.ceil(
+          finalTotalItems / pageSize,
+        ),
       },
     );
   }
@@ -120,7 +129,7 @@ export class PropertyService {
   async getPropertyById(id: string) {
     const property =
       await propertyRepository.findPropertyById(
-        BigInt(id)
+        BigInt(id),
       );
 
     if (!property) {
@@ -134,6 +143,22 @@ export class PropertyService {
       ...property,
       priceCalendar,
     });
+  }
+
+  private getLowestRoomPrice(
+    rooms: {
+      base_price: Prisma.Decimal;
+    }[],
+  ): number {
+    if (rooms.length === 0) {
+      return Infinity;
+    }
+
+    return Math.min(
+      ...rooms.map((room) =>
+        Number(room.base_price),
+      ),
+    );
   }
 
   private getDateRange(query: PropertyQueryDto) {
@@ -362,14 +387,14 @@ export class PropertyService {
             room,
             currentDate,
             nextDate,
-          )
+          ),
         )
         .map((room) =>
           this.calculateEffectivePrice(
             room,
             currentDate,
             nextDate,
-          )
+          ),
         );
 
       const lowestPrice =

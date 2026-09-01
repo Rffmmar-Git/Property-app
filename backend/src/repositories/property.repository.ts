@@ -7,10 +7,11 @@ export class PropertyRepository {
     const where = this.buildWhereClause(query);
     const orderBy = this.buildOrderBy(query);
 
-    const [properties, totalItems] = await prisma.$transaction([
-      this.findProperties(query, where, orderBy),
-      this.countProperties(where),
-    ]);
+    const [properties, totalItems] =
+      await prisma.$transaction([
+        this.findProperties(query, where, orderBy),
+        this.countProperties(where),
+      ]);
 
     return { properties, totalItems };
   }
@@ -197,18 +198,20 @@ export class PropertyRepository {
   ) {
     const dateRange = this.getDateRange(query);
 
-    const isPriceSorting = query.sortBy === "price";
+    const requiresPostProcessing =
+      dateRange !== null ||
+      query.sortBy === "price";
 
     return prisma.properties.findMany({
       where,
       orderBy,
 
-      skip: isPriceSorting
+      skip: requiresPostProcessing
         ? undefined
         : ((query.page ?? 1) - 1) *
           (query.pageSize ?? 10),
 
-      take: isPriceSorting
+      take: requiresPostProcessing
         ? undefined
         : query.pageSize ?? 10,
 

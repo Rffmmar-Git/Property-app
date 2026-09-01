@@ -23,15 +23,22 @@ export interface HomePropertiesResponse {
   };
 }
 
-export const getHomeProperties = async (): Promise<HomePropertiesResponse> => {
+export interface GetHomePropertiesParams {
+  page?: number;
+  pageSize?: number;
+}
+
+export const getHomeProperties = async (
+  params: GetHomePropertiesParams = {},
+): Promise<HomePropertiesResponse> => {
   const response = await api.get<{
     success: boolean;
     message: string;
     data: HomePropertiesResponse;
   }>("/properties", {
     params: {
-      page: 1,
-      pageSize: 4,
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 8,
     },
   });
 
