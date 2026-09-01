@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import HomePage from "../pages/home/HomePage";
+import PropertyListingPage from "../pages/property/PropertyListingPage";
+
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import TenantRegisterPage from "../pages/auth/TenantRegisterPage";
@@ -10,6 +13,18 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Home */}
+        <Route
+          path="/"
+          element={<HomePage />}
+        />
+
+        {/* Property */}
+        <Route
+          path="/properties"
+          element={<PropertyListingPage />}
+        />
+
         {/* Public Auth Routes */}
         <Route
           path="/login"
@@ -34,16 +49,6 @@ export default function AppRouter() {
         <Route
           path="/verify-email"
           element={<VerifyEmailPage />}
-        />
-
-        {/* Home */}
-        <Route
-          path="/"
-          element={
-            <div className="p-8 text-center font-bold">
-              Welcome to Property App!
-            </div>
-          }
         />
       </Routes>
     </BrowserRouter>
