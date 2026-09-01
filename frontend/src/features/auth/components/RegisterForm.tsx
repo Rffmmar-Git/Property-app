@@ -116,6 +116,20 @@ export function RegisterForm() {
           : "Create account"}
       </button>
 
+      {/* Tenant Registration */}
+      <div className="mt-4 text-center">
+        <p className="font-body-sm text-body-sm text-slate-muted">
+          Want to list your property?
+        </p>
+
+        <Link
+          to="/register/tenant"
+          className="mt-1 inline-block font-label-bold text-label-bold text-midnight-indigo hover:underline"
+        >
+          Register as a Tenant
+        </Link>
+      </div>
+
       {/* Login */}
       <div className="mt-5 border-t border-outline-variant pt-4 text-center">
         <p className="font-body-sm text-body-sm text-slate-muted">

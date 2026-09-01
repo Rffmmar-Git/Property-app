@@ -23,31 +23,49 @@ export const tenantRegisterSchema = z.object({
     .string()
     .trim()
     .min(1, "Identity number is required")
-    .max(50, "Identity number must not exceed 50 characters"),
+    .max(50, "Identity number must not exceed 50 characters")
+    .regex(
+      /^\d+$/,
+      "Identity number must contain numbers only",
+    ),
 
   taxNumber: z
     .string()
     .trim()
+    .min(1, "Tax number is required")
     .max(50, "Tax number must not exceed 50 characters")
-    .optional(),
+    .regex(
+      /^\d+$/,
+      "Tax number must contain numbers only",
+    ),
 
   bankName: z
     .string()
     .trim()
-    .max(100, "Bank name must not exceed 100 characters")
-    .optional(),
+    .min(1, "Bank name is required")
+    .max(100, "Bank name must not exceed 100 characters"),
 
   bankAccountName: z
     .string()
     .trim()
-    .max(100, "Bank account name must not exceed 100 characters")
-    .optional(),
+    .min(1, "Bank account name is required")
+    .max(
+      100,
+      "Bank account name must not exceed 100 characters",
+    ),
 
   bankAccountNumber: z
     .string()
     .trim()
-    .max(50, "Bank account number must not exceed 50 characters")
-    .optional(),
+    .min(1, "Bank account number is required")
+    .max(
+      50,
+      "Bank account number must not exceed 50 characters",
+    )
+    .regex(
+      /^\d+$/,
+      "Bank account number must contain numbers only",
+    ),
 });
 
 export type TenantRegisterInput = z.infer<

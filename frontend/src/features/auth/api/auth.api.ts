@@ -66,7 +66,7 @@ export const registerTenant = async (
     success: boolean;
     message: string;
     data: RegisterResponse;
-  }>("/auth/tenant/register", payload);
+  }>("/tenant/register", payload);
 
   return response.data.data;
 };

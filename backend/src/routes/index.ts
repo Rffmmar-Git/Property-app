@@ -1,5 +1,6 @@
 import { Router } from "express";
 import authRouter from "./auth.route";
+import tenantRouter from "./tenant.route";
 import propertyRouter from "./property.route";
 import destinationRouter from "./destination.route";
 import reservationRouter from "./reservation.route";
@@ -36,11 +37,12 @@ router.get(
       success: true,
       data: req.user,
     });
-  }
+  },
 );
 
-
 router.use("/auth", authRouter);
+
+router.use("/tenant", tenantRouter);
 
 router.use("/properties", propertyRouter);
 router.use("/reservations", reservationRouter);
@@ -48,4 +50,5 @@ router.use("/destinations", destinationRouter);
 router.use("/payments", paymentRouter);
 router.use("/reviews", reviewRouter);
 router.use("reports", reportRouter);
+
 export default router;
