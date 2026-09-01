@@ -89,4 +89,31 @@ export class PaymentRepository {
       },
     });
   }
+
+  /**
+ * Upload payment proof and update reservation status.
+ */
+async uploadProof(
+  reservationId: number,
+  paymentData: Prisma.paymentsUpdateInput,
+  reservationData: Prisma.reservationsUpdateInput
+): Promise<payments> {
+  return prisma.$transaction(async (tx) => {
+    const payment = await tx.payments.update({
+      where: {
+        reservation_id: BigInt(reservationId),
+      },
+      data: paymentData,
+    });
+
+    await tx.reservations.update({
+      where: {
+        id: BigInt(reservationId),
+      },
+      data: reservationData,
+    });
+
+    return payment;
+  });
+}
 }

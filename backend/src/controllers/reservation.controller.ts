@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../utils/AsyncHandler";
-import { ApiResponse } from "../utils/ApiResponse";
+import { asyncHandler } from "../utils";
+import { ApiResponse } from "../utils";
 import { createReservationSchema } from "../validations/reservation/create-reservation.validation";
 import { reservationIdSchema } from "../validations/common/reservation-id.schema";
 import { reservationService } from "../services/reservation/reservation.service";

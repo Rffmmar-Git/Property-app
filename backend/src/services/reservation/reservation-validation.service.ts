@@ -1,6 +1,6 @@
 import { rooms } from "../../generated/prisma/client";
 import { CreateReservationDto } from "../../types/dto";
-import { ApiError } from "../../utils/ApiError";
+import { ApiError } from "../../utils";
 import {AvailabilityRepository,RoomRepository}from "../../repositories";
 import { ReservationComplete } from "../../types/prisma";
 

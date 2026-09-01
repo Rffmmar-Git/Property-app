@@ -28,9 +28,13 @@ export const salesReportQuerySchema = z.object({
     .date()
     .optional(),
 
-  sortBy: z
-    .string()
-    .optional(),
+  ssortBy: z
+  .enum([
+    "check_in",
+    "created_at",
+    "total_price",
+  ])
+  .optional(),
 
   order: z
     .enum(["asc", "desc"])

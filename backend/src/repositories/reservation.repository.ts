@@ -208,6 +208,72 @@ async createWithTransaction(
     });
   }
 
+  async findByIdWithTransaction(
+  tx: Prisma.TransactionClient,
+  reservationId: number
+): Promise<ReservationComplete | null> {
+  return tx.reservations.findFirst({
+    where: {
+      id: BigInt(reservationId),
+    },
+    include: {
+      users: true,
+      rooms: {
+        include: {
+          properties: true,
+        },
+      },
+      payments: true,
+      reviews: true,
+    },
+  }) as Promise<ReservationComplete | null>;
+}
+
+  async markExpiredIfPending(
+  tx: Prisma.TransactionClient,
+  reservationId: number,
+  now: Date
+): Promise<number> {
+  const result =
+    await tx.reservations.updateMany({
+      where: {
+        id: BigInt(reservationId),
+        status:
+          reservation_status.WAITING_PAYMENT,
+        booking_expired_at: {
+          lte: now,
+        },
+      },
+      data: {
+        status:
+          reservation_status.EXPIRED,
+      },
+    });
+
+  return result.count;
+}
+
+  async findCompleteByIdWithTransaction(
+  tx: Prisma.TransactionClient,
+  reservationId: number
+): Promise<ReservationComplete | null> {
+  return tx.reservations.findFirst({
+    where: {
+      id: BigInt(reservationId),
+    },
+    include: {
+      users: true,
+      rooms: {
+        include: {
+          properties: true,
+        },
+      },
+      payments: true,
+      reviews: true,
+    },
+  }) as Promise<ReservationComplete | null>;
+}
+
   async cancelReservation(
   reservationId: number,
   reservationData: Prisma.reservationsUpdateInput

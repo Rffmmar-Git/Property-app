@@ -8,6 +8,14 @@ export const createReviewSchema = z.object({
     .int("Reservation ID must be an integer.")
     .positive("Reservation ID must be greater than 0."),
 
+     rating: z
+    .number({
+      error: "Rating is required.",
+    })
+    .int("Rating must be an integer.")
+    .min(1, "Rating must be at least 1.")
+    .max(5, "Rating must not exceed 5."),
+
   comment: z
     .string({
       error: "Comment is required.",

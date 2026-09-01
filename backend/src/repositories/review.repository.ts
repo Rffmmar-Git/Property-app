@@ -76,4 +76,18 @@ export class ReviewRepository {
       },
     });
   }
+  async findCompleteById(
+  reviewId: number
+) {
+  return prisma.reviews.findUnique({
+    where: {
+      id: BigInt(reviewId),
+    },
+    include: {
+      properties: true,
+      users: true,
+      reservations: true,
+    },
+  });
+}
 }

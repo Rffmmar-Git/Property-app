@@ -36,6 +36,18 @@ export class ReservationBookingService {
     return expiredAt;
   }
 
+  isReservationExpired(
+  status: reservation_status | null,
+  bookingExpiredAt: Date | null
+): boolean {
+  return (
+    status ===
+      reservation_status.WAITING_PAYMENT &&
+    bookingExpiredAt !== null &&
+    new Date() >= bookingExpiredAt
+  );
+}
+
   validateReservationCanBeCancelled(
     status: reservation_status | null
   ): void {

@@ -89,6 +89,52 @@ export class ReservationPersistenceService {
     );
   }
 
+  async expireReservation(
+  reservation: ReservationComplete
+): Promise<ReservationComplete | null> {
+  return prisma.$transaction(
+    async (tx) => {
+      const updatedCount =
+        await this.reservationRepository
+          .markExpiredIfPending(
+            tx,
+            Number(reservation.id),
+            new Date()
+          );
+
+      if (updatedCount === 0) {
+        return null;
+      }
+
+      const releasedCount =
+        await this.availabilityRepository
+          .releaseRoom(
+            tx,
+            Number(reservation.room_id),
+            reservation.check_in,
+            reservation.check_out
+          );
+
+      const expectedNights =
+        this.calculateNights(
+          reservation.check_in,
+          reservation.check_out
+        );
+
+      this.validateAvailabilityUpdate(
+        releasedCount,
+        expectedNights
+      );
+
+      return this.reservationRepository
+        .findCompleteByIdWithTransaction(
+          tx,
+          Number(reservation.id)
+        );
+    }
+  );
+}
+
   async cancelReservation(
     reservation: ReservationComplete
   ): Promise<reservations> {

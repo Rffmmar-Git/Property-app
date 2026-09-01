@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { asyncHandler, ApiResponse } from "../utils/core";
+import { asyncHandler } from "../utils";
+import { ApiResponse } from "../utils";
 import {
   registerSchema,
   loginSchema,

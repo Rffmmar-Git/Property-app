@@ -12,8 +12,6 @@ import { ReservationValidationService } from "./reservation-validation.service";
 import { ReservationBookingService } from "./reservation-booking.service";
 import { ReservationMapperService } from "./reservation-mapper.service";
 import { CancelReservationResponseDto } from "../../types/dto/reservation/cancel-reservation-response.dto";
-
-
 export class ReservationService {
   constructor(
     private readonly reservationRepository:
@@ -71,44 +69,85 @@ export class ReservationService {
   }
 
   async getReservationById(
-    userId: number,
-    reservationId: number
-  ) {
-    const reservation =
-      await this.reservationRepository.findCompleteById(
-        reservationId
-      );
+  userId: number,
+  reservationId: number
+) {
+  let reservation =
+    await this.reservationRepository
+      .findCompleteById(reservationId);
 
-    this.validationService.validateReservationExists(
+  this.validationService
+    .validateReservationExists(
       reservation
     );
 
-    this.validationService.validateReservationOwner(
+  this.validationService
+    .validateReservationOwner(
       userId,
       Number(reservation.user_id)
     );
 
-    return this.mapperService
-      .buildReservationDetailResponse(
-        reservation
-      );
-  }
-
-  async getMyReservations(
-    userId: number
+  if (
+    this.bookingService.isReservationExpired(
+      reservation.status,
+      reservation.booking_expired_at
+    )
   ) {
-    const reservations =
-      await this.reservationRepository
-        .findCompleteManyByUserId(
-          userId
-        );
+    const expired =
+      await this.persistenceService
+        .expireReservation(reservation);
 
-    return this.mapperService
-      .buildReservationListResponse(
-        reservations
-      );
+    if (expired) {
+      reservation = expired;
+    }
   }
 
+  return this.mapperService
+    .buildReservationDetailResponse(
+      reservation
+    );
+}
+  async getMyReservations(
+  userId: number
+) {
+  const reservations =
+    await this.reservationRepository
+      .findCompleteManyByUserId(
+        userId
+      );
+
+  const updatedReservations = [];
+
+  for (const reservation of reservations) {
+    if (
+      this.bookingService.isReservationExpired(
+        reservation.status,
+        reservation.booking_expired_at
+      )
+    ) {
+      const expired =
+        await this.persistenceService
+          .expireReservation(
+            reservation
+          );
+
+      updatedReservations.push(
+        expired ?? reservation
+      );
+
+      continue;
+    }
+
+    updatedReservations.push(
+      reservation
+    );
+  }
+
+  return this.mapperService
+    .buildReservationListResponse(
+      updatedReservations
+    );
+}
 async cancelReservation(
   userId: number,
   reservationId: number
