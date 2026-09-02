@@ -11,17 +11,39 @@ export class PropertyController {
 
     return res
       .status(200)
-      .json(new ApiResponse(true, "Properties retrieved successfully", result));
+      .json(
+        new ApiResponse(
+          true,
+          "Properties retrieved successfully",
+          result,
+        ),
+      );
   });
 
   getPropertyById = asyncHandler(async (req: Request, res: Response) => {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = Array.isArray(req.params.id)
+      ? req.params.id[0]
+      : req.params.id;
 
-    const property = await propertyService.getPropertyById(id);
+    const roomId =
+      typeof req.query.roomId === "string"
+        ? req.query.roomId
+        : undefined;
+
+    const property = await propertyService.getPropertyById(
+      id,
+      roomId,
+    );
 
     return res
       .status(200)
-      .json(new ApiResponse(true, "Property retrieved successfully", property));
+      .json(
+        new ApiResponse(
+          true,
+          "Property retrieved successfully",
+          property,
+        ),
+      );
   });
 }
 

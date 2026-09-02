@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import HomePage from "../pages/home/HomePage";
 import PropertyListingPage from "../pages/property/PropertyListingPage";
+import PropertyDetailPage from "../pages/property/PropertyDetailPage";
 
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
@@ -23,6 +24,11 @@ export default function AppRouter() {
         <Route
           path="/properties"
           element={<PropertyListingPage />}
+        />
+
+        <Route
+          path="/properties/:id"
+          element={<PropertyDetailPage />}
         />
 
         {/* Public Auth Routes */}

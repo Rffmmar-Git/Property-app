@@ -28,6 +28,8 @@ export class PropertyRepository {
         name: true,
         description: true,
         address: true,
+        latitude: true,
+        longitude: true,
 
         check_in_time: true,
         check_out_time: true,

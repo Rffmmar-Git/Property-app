@@ -7,6 +7,9 @@ type PropertyDetailSource = {
   description: string | null;
   address: string;
 
+  latitude: Prisma.Decimal | null;
+  longitude: Prisma.Decimal | null;
+
   check_in_time: Date | null;
   check_out_time: Date | null;
 
@@ -39,8 +42,17 @@ type PropertyDetailSource = {
   }[];
 };
 
+const formatTime = (value: Date | null): string | null => {
+  if (!value) return null;
+
+  const hours = String(value.getUTCHours()).padStart(2, "0");
+  const minutes = String(value.getUTCMinutes()).padStart(2, "0");
+
+  return `${hours}:${minutes}`;
+};
+
 export function mapPropertyDetail(
-  property: PropertyDetailSource
+  property: PropertyDetailSource,
 ): PropertyDetailDto {
   return {
     id: property.id.toString(),
@@ -48,11 +60,19 @@ export function mapPropertyDetail(
     description: property.description,
     address: property.address,
 
-    checkInTime:
-      property.check_in_time?.toISOString() ?? null,
+    latitude:
+      property.latitude !== null
+        ? Number(property.latitude)
+        : null,
 
-    checkOutTime:
-      property.check_out_time?.toISOString() ?? null,
+    longitude:
+      property.longitude !== null
+        ? Number(property.longitude)
+        : null,
+
+    checkInTime: formatTime(property.check_in_time),
+
+    checkOutTime: formatTime(property.check_out_time),
 
     category: property.property_categories.name,
 

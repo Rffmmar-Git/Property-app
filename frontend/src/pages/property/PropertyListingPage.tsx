@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import HomeNavbar from "../../features/home/components/HomeNavbar";
@@ -8,12 +8,19 @@ import { useProperties } from "../../features/property/hooks/useProperties";
 import { usePropertyCategories } from "../../features/property/hooks/usePropertyCategories";
 
 const PAGE_SIZE = 12;
+const SEARCH_DEBOUNCE_MS = 500;
 
 export default function PropertyListingPage() {
   const [searchParams] = useSearchParams();
 
   const [page, setPage] = useState(1);
+
+  // Value shown inside the input
+  const [searchInput, setSearchInput] = useState("");
+
+  // Value actually sent to the API
   const [search, setSearch] = useState("");
+
   const [category, setCategory] = useState("");
   const [sortBy, setSortBy] = useState<
     "created_at" | "name" | "price"
@@ -30,6 +37,23 @@ export default function PropertyListingPage() {
 
   const { data: categories = [] } =
     usePropertyCategories();
+
+  /*
+   * Debounce search input.
+   *
+   * The API request will only use the latest search value
+   * after the user stops typing for 500ms.
+   */
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchInput]);
 
   const {
     data,
@@ -52,8 +76,7 @@ export default function PropertyListingPage() {
   const pagination = data?.pagination;
 
   const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1);
+    setSearchInput(value);
   };
 
   const handleCategoryChange = (value: string) => {
@@ -72,10 +95,8 @@ export default function PropertyListingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-surface">
-      {/* Navbar */}
       <HomeNavbar />
 
-      {/* Page Header */}
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-[1400px] px-5 py-10 sm:px-6 lg:px-8">
           <h1 className="font-headline-lg text-3xl font-bold text-slate-text sm:text-4xl">
@@ -89,10 +110,9 @@ export default function PropertyListingPage() {
         </div>
       </header>
 
-      {/* Property Listing */}
       <main className="mx-auto w-full max-w-[1400px] flex-1 px-5 py-6 sm:px-6 lg:px-8">
         <PropertyListingFilter
-          search={search}
+          search={searchInput}
           category={category}
           categories={categories}
           sortBy={sortBy}
@@ -126,7 +146,6 @@ export default function PropertyListingPage() {
           )}
         </div>
 
-        {/* Loading */}
         {isLoading && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, index) => (
@@ -146,7 +165,6 @@ export default function PropertyListingPage() {
           </div>
         )}
 
-        {/* Error */}
         {isError && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-12 text-center">
             <h2 className="text-base font-semibold text-red-700">
@@ -160,7 +178,6 @@ export default function PropertyListingPage() {
           </div>
         )}
 
-        {/* Empty */}
         {!isLoading &&
           !isError &&
           properties.length === 0 && (
@@ -176,7 +193,6 @@ export default function PropertyListingPage() {
             </div>
           )}
 
-        {/* Properties */}
         {!isLoading &&
           !isError &&
           properties.length > 0 && (
@@ -190,7 +206,6 @@ export default function PropertyListingPage() {
             </div>
           )}
 
-        {/* Pagination */}
         {!isLoading &&
           !isError &&
           pagination &&

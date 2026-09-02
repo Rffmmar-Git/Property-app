@@ -14,30 +14,19 @@ export class PropertyService {
   async getAllProperties(
     query: PropertyQueryDto,
   ): Promise<PropertyListResponseDto> {
-    const page =
-      query.page && query.page > 0 ? query.page : 1;
+    const page = query.page && query.page > 0 ? query.page : 1;
 
     const pageSize =
-      query.pageSize && query.pageSize > 0
-        ? Math.min(query.pageSize, 50)
-        : 10;
+      query.pageSize && query.pageSize > 0 ? Math.min(query.pageSize, 50) : 10;
 
-    const allowedSortBy: PropertySortBy[] = [
-      "created_at",
-      "name",
-      "price",
-    ];
+    const allowedSortBy: PropertySortBy[] = ["created_at", "name", "price"];
 
-    const sortBy = allowedSortBy.includes(
-      query.sortBy as PropertySortBy,
-    )
+    const sortBy = allowedSortBy.includes(query.sortBy as PropertySortBy)
       ? (query.sortBy as PropertySortBy)
       : "created_at";
 
     const order: PropertySortOrder =
-      query.order === "asc" || query.order === "desc"
-        ? query.order
-        : "desc";
+      query.order === "asc" || query.order === "desc" ? query.order : "desc";
 
     const { properties, totalItems } =
       await propertyRepository.findAllProperties({
@@ -50,8 +39,7 @@ export class PropertyService {
 
     const dateRange = this.getDateRange(query);
 
-    const requiresPostProcessing =
-      dateRange !== null || sortBy === "price";
+    const requiresPostProcessing = dateRange !== null || sortBy === "price";
 
     let processedProperties = dateRange
       ? properties
@@ -65,12 +53,11 @@ export class PropertyService {
                 ),
               )
               .map((room) => ({
-                base_price:
-                  this.calculateEffectivePrice(
-                    room,
-                    dateRange.checkIn,
-                    dateRange.checkOut,
-                  ),
+                base_price: this.calculateEffectivePrice(
+                  room,
+                  dateRange.checkIn,
+                  dateRange.checkOut,
+                ),
               }));
 
             return {
@@ -78,26 +65,15 @@ export class PropertyService {
               rooms: availableRooms,
             };
           })
-          .filter(
-            (property) => property.rooms.length > 0,
-          )
+          .filter((property) => property.rooms.length > 0)
       : properties;
 
     if (sortBy === "price") {
-      processedProperties = [
-        ...processedProperties,
-      ].sort((a, b) => {
-        const priceA = this.getLowestRoomPrice(
-          a.rooms,
-        );
+      processedProperties = [...processedProperties].sort((a, b) => {
+        const priceA = this.getLowestRoomPrice(a.rooms);
+        const priceB = this.getLowestRoomPrice(b.rooms);
 
-        const priceB = this.getLowestRoomPrice(
-          b.rooms,
-        );
-
-        return order === "asc"
-          ? priceA - priceB
-          : priceB - priceA;
+        return order === "asc" ? priceA - priceB : priceB - priceA;
       });
     }
 
@@ -105,45 +81,46 @@ export class PropertyService {
       ? processedProperties.length
       : totalItems;
 
-    const paginatedProperties =
-      requiresPostProcessing
-        ? processedProperties.slice(
-            (page - 1) * pageSize,
-            page * pageSize,
-          )
-        : processedProperties;
+    const paginatedProperties = requiresPostProcessing
+      ? processedProperties.slice((page - 1) * pageSize, page * pageSize)
+      : processedProperties;
 
-    return mapPropertyListResponse(
-      paginatedProperties,
-      {
-        page,
-        pageSize,
-        totalItems: finalTotalItems,
-        totalPages: Math.ceil(
-          finalTotalItems / pageSize,
-        ),
-      },
-    );
-  }
-
-  async getPropertyById(id: string) {
-    const property =
-      await propertyRepository.findPropertyById(
-        BigInt(id),
-      );
-
-    if (!property) {
-      throw new ApiError(404, "Property not found");
-    }
-
-    const priceCalendar =
-      this.generatePriceCalendar(property.rooms);
-
-    return mapPropertyDetail({
-      ...property,
-      priceCalendar,
+    return mapPropertyListResponse(paginatedProperties, {
+      page,
+      pageSize,
+      totalItems: finalTotalItems,
+      totalPages: Math.ceil(finalTotalItems / pageSize),
     });
   }
+
+  async getPropertyById(id: string, roomId?: string) {
+  const property = await propertyRepository.findPropertyById(BigInt(id));
+
+  if (!property) {
+    throw new ApiError(404, "Property not found");
+  }
+
+  let priceCalendar;
+
+  if (roomId) {
+    const selectedRoom = property.rooms.find(
+      (room) => room.id === BigInt(roomId),
+    );
+
+    if (!selectedRoom) {
+      throw new ApiError(404, "Room not found");
+    }
+
+    priceCalendar = this.generatePriceCalendar([selectedRoom]);
+  } else {
+    priceCalendar = this.generatePriceCalendar(property.rooms);
+  }
+
+  return mapPropertyDetail({
+    ...property,
+    priceCalendar,
+  });
+}
 
   private getLowestRoomPrice(
     rooms: {
@@ -154,25 +131,15 @@ export class PropertyService {
       return Infinity;
     }
 
-    return Math.min(
-      ...rooms.map((room) =>
-        Number(room.base_price),
-      ),
-    );
+    return Math.min(...rooms.map((room) => Number(room.base_price)));
   }
 
   private getDateRange(query: PropertyQueryDto) {
-    if (
-      !query.checkIn ||
-      !query.duration ||
-      query.duration <= 0
-    ) {
+    if (!query.checkIn || !query.duration || query.duration <= 0) {
       return null;
     }
 
-    const checkIn = new Date(
-      `${query.checkIn}T00:00:00.000Z`,
-    );
+    const checkIn = new Date(`${query.checkIn}T00:00:00.000Z`);
 
     if (Number.isNaN(checkIn.getTime())) {
       return null;
@@ -180,9 +147,7 @@ export class PropertyService {
 
     const checkOut = new Date(checkIn);
 
-    checkOut.setUTCDate(
-      checkOut.getUTCDate() + query.duration,
-    );
+    checkOut.setUTCDate(checkOut.getUTCDate() + query.duration);
 
     return {
       checkIn,
@@ -190,19 +155,14 @@ export class PropertyService {
     };
   }
 
-  private getStayDates(
-    checkIn: Date,
-    checkOut: Date,
-  ): Date[] {
+  private getStayDates(checkIn: Date, checkOut: Date): Date[] {
     const dates: Date[] = [];
     const current = new Date(checkIn);
 
     while (current < checkOut) {
       dates.push(new Date(current));
 
-      current.setUTCDate(
-        current.getUTCDate() + 1,
-      );
+      current.setUTCDate(current.getUTCDate() + 1);
     }
 
     return dates;
@@ -225,10 +185,7 @@ export class PropertyService {
     checkIn: Date,
     checkOut: Date,
   ): boolean {
-    const stayDates = this.getStayDates(
-      checkIn,
-      checkOut,
-    );
+    const stayDates = this.getStayDates(checkIn, checkOut);
 
     const activeStatuses = [
       "WAITING_PAYMENT",
@@ -237,40 +194,30 @@ export class PropertyService {
     ];
 
     return stayDates.every((stayDate) => {
-      const availability =
-        room.room_availabilities.find(
-          (item) =>
-            this.isSameDate(
-              item.available_date,
-              stayDate,
-            ),
-        );
+      const availability = room.room_availabilities.find((item) =>
+        this.isSameDate(item.available_date, stayDate),
+      );
 
       if (availability?.is_closed === true) {
         return false;
       }
 
       let availableRooms =
-        availability?.available_rooms ??
-        room.total_rooms;
+        availability?.available_rooms ?? room.total_rooms;
 
-      const reservedRooms =
-        room.reservations.filter((reservation) => {
-          if (
-            !reservation.status ||
-            !activeStatuses.includes(
-              reservation.status,
-            )
-          ) {
-            return false;
-          }
+      const reservedRooms = room.reservations.filter((reservation) => {
+        if (
+          !reservation.status ||
+          !activeStatuses.includes(reservation.status)
+        ) {
+          return false;
+        }
 
-          return (
-            reservation.check_in <
-              this.addDays(stayDate, 1) &&
-            reservation.check_out > stayDate
-          );
-        }).length;
+        return (
+          reservation.check_in < this.addDays(stayDate, 1) &&
+          reservation.check_out > stayDate
+        );
+      }).length;
 
       availableRooms -= reservedRooms;
 
@@ -291,55 +238,41 @@ export class PropertyService {
     checkIn: Date,
     checkOut: Date,
   ): Prisma.Decimal {
-    const stayDates = this.getStayDates(
-      checkIn,
-      checkOut,
-    );
+    const stayDates = this.getStayDates(checkIn, checkOut);
 
-    const nightlyPrices = stayDates.map(
-      (stayDate) => {
-        const applicableRates =
-          room.peak_season_rates.filter(
-            (rate) =>
-              rate.start_date <= stayDate &&
-              rate.end_date >= stayDate,
-          );
+    const nightlyPrices = stayDates.map((stayDate) => {
+      const applicableRates = room.peak_season_rates.filter(
+        (rate) =>
+          rate.start_date <= stayDate &&
+          rate.end_date >= stayDate,
+      );
 
-        let price = Number(room.base_price);
+      let price = Number(room.base_price);
 
-        if (applicableRates.length > 0) {
-          const rate = applicableRates[0];
-          const adjustmentValue = Number(
-            rate.adjustment_value,
-          );
+      if (applicableRates.length > 0) {
+        const rate = applicableRates[0];
+        const adjustmentValue = Number(rate.adjustment_value);
 
-          if (
-            rate.adjustment_type === "PERCENTAGE"
-          ) {
-            price +=
-              price * (adjustmentValue / 100);
-          } else if (
-            rate.adjustment_type === "FIXED"
-          ) {
-            price += adjustmentValue;
-          }
+        if (rate.adjustment_type === "PERCENTAGE") {
+          price += price * (adjustmentValue / 100);
+        } else if (rate.adjustment_type === "FIXED") {
+          price += adjustmentValue;
         }
+      }
 
-        return price;
-      },
-    );
+      return price;
+    });
 
     if (!nightlyPrices.length) {
       return room.base_price;
     }
 
-    return new Prisma.Decimal(
-      Math.min(...nightlyPrices),
-    );
+    return new Prisma.Decimal(Math.min(...nightlyPrices));
   }
 
   private generatePriceCalendar(
     rooms: {
+      id: bigint;
       base_price: Prisma.Decimal;
       total_rooms: number;
       room_availabilities: {
@@ -372,77 +305,59 @@ export class PropertyService {
     for (let i = 0; i < 30; i++) {
       const currentDate = new Date(startDate);
 
-      currentDate.setUTCDate(
-        currentDate.getUTCDate() + i,
+      currentDate.setUTCDate(currentDate.getUTCDate() + i);
+
+      const nextDate = this.addDays(currentDate, 1);
+
+      const availableRooms = rooms.filter((room) =>
+        this.isRoomAvailable(room, currentDate, nextDate),
       );
 
-      const nextDate = this.addDays(
-        currentDate,
-        1,
-      );
+      if (availableRooms.length === 0) {
+        calendar.push({
+          date: currentDate.toISOString().split("T")[0],
+          price: null,
+          available: false,
+        });
 
-      const availablePrices = rooms
-        .filter((room) =>
-          this.isRoomAvailable(
-            room,
-            currentDate,
-            nextDate,
-          ),
-        )
-        .map((room) =>
+        continue;
+      }
+
+      const prices = availableRooms.map((room) =>
+        Number(
           this.calculateEffectivePrice(
             room,
             currentDate,
             nextDate,
           ),
-        );
-
-      const lowestPrice =
-        availablePrices.length > 0
-          ? Math.min(
-              ...availablePrices.map(Number),
-            )
-          : null;
+        ),
+      );
 
       calendar.push({
-        date: currentDate
-          .toISOString()
-          .split("T")[0],
-        price: lowestPrice,
-        available: lowestPrice !== null,
+        date: currentDate.toISOString().split("T")[0],
+        price: Math.min(...prices),
+        available: true,
       });
     }
 
     return calendar;
   }
 
-  private isSameDate(
-    firstDate: Date,
-    secondDate: Date,
-  ): boolean {
+  private isSameDate(firstDate: Date, secondDate: Date): boolean {
     return (
-      firstDate.getUTCFullYear() ===
-        secondDate.getUTCFullYear() &&
-      firstDate.getUTCMonth() ===
-        secondDate.getUTCMonth() &&
-      firstDate.getUTCDate() ===
-        secondDate.getUTCDate()
+      firstDate.getUTCFullYear() === secondDate.getUTCFullYear() &&
+      firstDate.getUTCMonth() === secondDate.getUTCMonth() &&
+      firstDate.getUTCDate() === secondDate.getUTCDate()
     );
   }
 
-  private addDays(
-    date: Date,
-    days: number,
-  ): Date {
+  private addDays(date: Date, days: number): Date {
     const result = new Date(date);
 
-    result.setUTCDate(
-      result.getUTCDate() + days,
-    );
+    result.setUTCDate(result.getUTCDate() + days);
 
     return result;
   }
 }
 
-export const propertyService =
-  new PropertyService();
+export const propertyService = new PropertyService();
