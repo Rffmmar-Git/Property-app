@@ -25,14 +25,21 @@ export interface TenantRegisterPayload {
 
 export interface VerifyEmailPayload {
   token: string;
-  password: string;
+  password?: string;
 }
 
 export interface ResendVerificationPayload {
   email: string;
 }
 
-export const login = async (payload: LoginPayload): Promise<LoginResponse> => {
+export interface VerificationTokenValidation {
+  valid: boolean;
+  requiresPassword: boolean;
+}
+
+export const login = async (
+  payload: LoginPayload,
+): Promise<LoginResponse> => {
   const response = await api.post<{
     success: boolean;
     message: string;
@@ -78,13 +85,13 @@ export const registerTenant = async (
   return response.data.data;
 };
 
-export const validateVerificationToken = async (token: string) => {
+export const validateVerificationToken = async (
+  token: string,
+): Promise<VerificationTokenValidation> => {
   const response = await api.get<{
     success: boolean;
     message: string;
-    data: {
-      valid: boolean;
-    };
+    data: VerificationTokenValidation;
   }>(`/auth/verify-email/${token}`);
 
   return response.data.data;

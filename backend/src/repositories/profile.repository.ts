@@ -40,10 +40,7 @@ export class ProfileRepository {
     });
   }
 
-  async updateProfilePicture(
-    userId: bigint,
-    profilePicture: string,
-  ) {
+  async updateProfilePicture(userId: bigint, profilePicture: string) {
     return prisma.users.update({
       where: {
         id: userId,
@@ -54,10 +51,7 @@ export class ProfileRepository {
     });
   }
 
-  async updatePassword(
-    userId: bigint,
-    password: string,
-  ) {
+  async updatePassword(userId: bigint, password: string) {
     return prisma.users.update({
       where: {
         id: userId,

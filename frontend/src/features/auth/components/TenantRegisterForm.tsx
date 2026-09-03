@@ -238,7 +238,7 @@ export function TenantRegisterForm() {
       <button
         type="submit"
         disabled={registerMutation.isPending}
-        className="mt-4 h-[38px] w-full rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-4 h-[38px] w-full cursor-pointer rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {registerMutation.isPending
           ? "Creating account..."
@@ -253,7 +253,7 @@ export function TenantRegisterForm() {
 
         <Link
           to="/register"
-          className="mt-1 inline-block font-label-bold text-label-bold text-midnight-indigo hover:underline"
+          className="mt-1 inline-block cursor-pointer font-label-bold text-label-bold text-midnight-indigo hover:underline"
         >
           Register as a Customer
         </Link>
@@ -265,7 +265,7 @@ export function TenantRegisterForm() {
           Already have an account?{" "}
           <Link
             to="/login"
-            className="font-label-bold text-label-bold text-midnight-indigo hover:underline"
+            className="cursor-pointer font-label-bold text-label-bold text-midnight-indigo hover:underline"
           >
             Login
           </Link>

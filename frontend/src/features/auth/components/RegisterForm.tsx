@@ -29,9 +29,7 @@ export function RegisterForm() {
     return "Unable to create your account. Please try again.";
   };
 
-  const handleSubmit = (
-    event: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     registerMutation.mutate(
@@ -52,10 +50,7 @@ export function RegisterForm() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full"
-    >
+    <form onSubmit={handleSubmit} className="w-full">
       {/* Full Name */}
       <div className="relative mb-3">
         <User
@@ -67,9 +62,7 @@ export function RegisterForm() {
           id="fullName"
           type="text"
           value={fullName}
-          onChange={(event) =>
-            setFullName(event.target.value)
-          }
+          onChange={(event) => setFullName(event.target.value)}
           placeholder="Full Name"
           autoComplete="name"
           required
@@ -88,9 +81,7 @@ export function RegisterForm() {
           id="email"
           type="email"
           value={email}
-          onChange={(event) =>
-            setEmail(event.target.value)
-          }
+          onChange={(event) => setEmail(event.target.value)}
           placeholder="Email Address"
           autoComplete="email"
           required
@@ -109,11 +100,9 @@ export function RegisterForm() {
       <button
         type="submit"
         disabled={registerMutation.isPending}
-        className="mt-4 h-[38px] w-full rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-4 h-[38px] w-full cursor-pointer rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {registerMutation.isPending
-          ? "Creating account..."
-          : "Create account"}
+        {registerMutation.isPending ? "Creating account..." : "Create account"}
       </button>
 
       {/* Tenant Registration */}
@@ -124,7 +113,7 @@ export function RegisterForm() {
 
         <Link
           to="/register/tenant"
-          className="mt-1 inline-block font-label-bold text-label-bold text-midnight-indigo hover:underline"
+          className="mt-1 inline-block cursor-pointer font-label-bold text-label-bold text-midnight-indigo hover:underline"
         >
           Register as a Tenant
         </Link>
@@ -136,7 +125,7 @@ export function RegisterForm() {
           Already have an account?{" "}
           <Link
             to="/login"
-            className="font-label-bold text-label-bold text-midnight-indigo hover:underline"
+            className="cursor-pointer font-label-bold text-label-bold text-midnight-indigo hover:underline"
           >
             Login
           </Link>

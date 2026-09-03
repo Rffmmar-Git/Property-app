@@ -2,14 +2,12 @@ import bcrypt from "bcrypt";
 
 import { authRepository } from "../repositories/auth.repository";
 import { ApiError } from "../utils/core";
-
 import {
   generateAccessToken,
   generateToken,
   sendVerificationEmail,
   sendResetPasswordEmail,
 } from "../utils/auth";
-
 import {
   LoginInput,
   RegisterInput,
@@ -17,7 +15,6 @@ import {
   ForgotPasswordInput,
   ResetPasswordInput,
 } from "../validations/auth";
-
 import { user_role } from "../generated/prisma/enums";
 
 export class AuthService {
@@ -114,7 +111,11 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    await authRepository.resetPassword(reset.user_id, reset.id, hashedPassword);
+    await authRepository.resetPassword(
+      reset.user_id,
+      reset.id,
+      hashedPassword,
+    );
 
     return {
       message: "Password has been reset successfully",
@@ -141,6 +142,7 @@ export class AuthService {
 
     return {
       valid: true,
+      requiresPassword: !verification.users.password,
     };
   }
 

@@ -12,6 +12,8 @@ import CheckEmailPage from "../pages/auth/CheckEmailPage";
 import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
 import GoogleCallbackPage from "../pages/auth/GoogleCallbackPage";
 
+import CustomerProfilePage from "../pages/profile/CustomerProfilePage";
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -23,6 +25,9 @@ export default function AppRouter() {
         <Route path="/properties" element={<PropertyListingPage />} />
 
         <Route path="/properties/:id" element={<PropertyDetailPage />} />
+
+        {/* Customer Profile */}
+        <Route path="/profile" element={<CustomerProfilePage />} />
 
         {/* Customer Auth Routes */}
         <Route path="/login" element={<LoginPage />} />

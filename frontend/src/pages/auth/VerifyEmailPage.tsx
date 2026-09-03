@@ -13,7 +13,7 @@ export default function VerifyEmailPage() {
               to="/"
               className="font-headline-md text-headline-md font-bold text-midnight-indigo"
             >
-                Property App
+              Property App
             </Link>
           </div>
 
@@ -24,8 +24,7 @@ export default function VerifyEmailPage() {
             </h1>
 
             <p className="mt-1 font-body-sm text-body-sm text-slate-muted">
-              Create a password to complete your
-              account.
+              Verify your email address to continue.
             </p>
           </div>
 

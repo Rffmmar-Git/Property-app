@@ -2,9 +2,7 @@ import { z } from "zod";
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z
-      .string()
-      .min(1, "Current password is required"),
+    currentPassword: z.string().min(1, "Current password is required"),
 
     newPassword: z
       .string()
@@ -15,18 +13,11 @@ export const changePasswordSchema = z
         "New password must contain at least one uppercase letter, one lowercase letter, and one number",
       ),
 
-    confirmPassword: z
-      .string()
-      .min(1, "Confirm password is required"),
+    confirmPassword: z.string().min(1, "Confirm password is required"),
   })
-  .refine(
-    (data) => data.newPassword === data.confirmPassword,
-    {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    },
-  );
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
-export type ChangePasswordInput = z.infer<
-  typeof changePasswordSchema
->;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

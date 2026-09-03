@@ -74,7 +74,7 @@ export function LoginForm() {
         <button
           type="button"
           onClick={() => setShowPassword((current) => !current)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-muted hover:text-slate-text"
+          className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-muted hover:text-slate-text"
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? (
@@ -89,7 +89,7 @@ export function LoginForm() {
       <div className="mt-3 flex justify-end">
         <Link
           to="/forgot-password"
-          className="font-label-sm text-label-sm text-midnight-indigo hover:underline"
+          className="cursor-pointer font-label-sm text-label-sm text-midnight-indigo hover:underline"
         >
           Forgot password?
         </Link>
@@ -106,7 +106,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={loginMutation.isPending}
-        className="mt-4 h-[38px] w-full rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-4 h-[38px] w-full cursor-pointer rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loginMutation.isPending ? "Logging in..." : "Login"}
       </button>
@@ -117,7 +117,7 @@ export function LoginForm() {
           Are you a tenant?{" "}
           <Link
             to="/tenant/login"
-            className="font-label-bold text-label-bold text-midnight-indigo hover:underline"
+            className="cursor-pointer font-label-bold text-label-bold text-midnight-indigo hover:underline"
           >
             Login here
           </Link>
@@ -137,7 +137,7 @@ export function LoginForm() {
       <button
         type="button"
         onClick={handleGoogleLogin}
-        className="flex h-[40px] w-full items-center justify-center gap-2 rounded-md border border-outline-variant bg-surface-white font-label-bold text-label-bold text-slate-text transition hover:bg-surface"
+        className="flex h-[40px] w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-outline-variant bg-surface-white font-label-bold text-label-bold text-slate-text transition hover:bg-surface"
       >
         <span className="font-bold text-[#4285F4]">G</span>
         Continue with Google
@@ -149,7 +149,7 @@ export function LoginForm() {
           Don't have an account?{" "}
           <Link
             to="/register"
-            className="font-label-bold text-label-bold text-midnight-indigo hover:underline"
+            className="cursor-pointer font-label-bold text-label-bold text-midnight-indigo hover:underline"
           >
             Register
           </Link>

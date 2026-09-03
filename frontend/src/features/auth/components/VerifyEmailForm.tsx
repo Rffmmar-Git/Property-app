@@ -13,7 +13,6 @@ export function VerifyEmailForm() {
   const token = searchParams.get("token");
 
   const verifyMutation = useVerifyEmail();
-
   const tokenValidation = useValidateVerificationToken(token);
 
   const [password, setPassword] = useState("");
@@ -23,6 +22,8 @@ export function VerifyEmailForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [validationError, setValidationError] = useState("");
+
+  const requiresPassword = tokenValidation.data?.requiresPassword ?? false;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -37,40 +38,46 @@ export function VerifyEmailForm() {
       return;
     }
 
-    if (password.length < 8) {
-      setValidationError("Password must be at least 8 characters.");
-      return;
-    }
+    if (requiresPassword) {
+      if (password.length < 8) {
+        setValidationError("Password must be at least 8 characters.");
+        return;
+      }
 
-    if (!/[A-Z]/.test(password)) {
-      setValidationError(
-        "Password must contain at least one uppercase letter.",
-      );
-      return;
-    }
+      if (!/[A-Z]/.test(password)) {
+        setValidationError(
+          "Password must contain at least one uppercase letter.",
+        );
+        return;
+      }
 
-    if (!/[a-z]/.test(password)) {
-      setValidationError(
-        "Password must contain at least one lowercase letter.",
-      );
-      return;
-    }
+      if (!/[a-z]/.test(password)) {
+        setValidationError(
+          "Password must contain at least one lowercase letter.",
+        );
+        return;
+      }
 
-    if (!/[0-9]/.test(password)) {
-      setValidationError("Password must contain at least one number.");
-      return;
-    }
+      if (!/[0-9]/.test(password)) {
+        setValidationError("Password must contain at least one number.");
+        return;
+      }
 
-    if (password !== confirmPassword) {
-      setValidationError("Passwords do not match.");
-      return;
+      if (password !== confirmPassword) {
+        setValidationError("Passwords do not match.");
+        return;
+      }
     }
 
     verifyMutation.mutate(
-      {
-        token,
-        password,
-      },
+      requiresPassword
+        ? {
+            token,
+            password,
+          }
+        : {
+            token,
+          },
       {
         onSuccess: () => {
           navigate("/login", {
@@ -138,14 +145,14 @@ export function VerifyEmailForm() {
 
         <Link
           to="/login"
-          className="mt-6 flex h-[38px] w-full items-center justify-center rounded-md bg-midnight-indigo font-label-bold text-label-bold text-white transition hover:opacity-90"
+          className="mt-6 flex h-[38px] w-full cursor-pointer items-center justify-center rounded-md bg-midnight-indigo font-label-bold text-label-bold text-white transition hover:opacity-90"
         >
           Back to Login
         </Link>
 
         <Link
           to="/check-email"
-          className="mt-3 flex h-[38px] w-full items-center justify-center rounded-md border border-midnight-indigo font-label-bold text-label-bold text-midnight-indigo transition hover:bg-blue-50"
+          className="mt-3 flex h-[38px] w-full cursor-pointer items-center justify-center rounded-md border border-midnight-indigo font-label-bold text-label-bold text-midnight-indigo transition hover:bg-blue-50"
         >
           Resend Verification Email
         </Link>
@@ -155,7 +162,6 @@ export function VerifyEmailForm() {
 
   /*
    * Token validation is still running.
-   * Do not show the password form yet.
    */
   if (tokenValidation.isLoading) {
     return (
@@ -192,14 +198,14 @@ export function VerifyEmailForm() {
 
         <Link
           to="/login"
-          className="mt-6 flex h-[38px] w-full items-center justify-center rounded-md bg-midnight-indigo font-label-bold text-label-bold text-white transition hover:opacity-90"
+          className="mt-6 flex h-[38px] w-full cursor-pointer items-center justify-center rounded-md bg-midnight-indigo font-label-bold text-label-bold text-white transition hover:opacity-90"
         >
           Back to Login
         </Link>
 
         <Link
           to="/check-email"
-          className="mt-3 flex h-[38px] w-full items-center justify-center rounded-md border border-midnight-indigo font-label-bold text-label-bold text-midnight-indigo transition hover:bg-blue-50"
+          className="mt-3 flex h-[38px] w-full cursor-pointer items-center justify-center rounded-md border border-midnight-indigo font-label-bold text-label-bold text-midnight-indigo transition hover:bg-blue-50"
         >
           Resend Verification Email
         </Link>
@@ -209,92 +215,118 @@ export function VerifyEmailForm() {
 
   /*
    * Token is valid.
-   * → show password form.
+   *
+   * New account:
+   * → show Create Password form.
+   *
+   * Existing account with password:
+   * → only show email verification confirmation.
    */
   return (
     <form onSubmit={handleSubmit} className="w-full">
-      {/* Password */}
-      <div className="relative mb-3">
-        <LockKeyhole
-          className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-muted"
-          strokeWidth={1.8}
-        />
+      {requiresPassword ? (
+        <>
+          {/* Password */}
+          <div className="relative mb-3">
+            <LockKeyhole
+              className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-muted"
+              strokeWidth={1.8}
+            />
 
-        <input
-          type={showPassword ? "text" : "password"}
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value);
-            setValidationError("");
-          }}
-          placeholder="Password"
-          autoComplete="new-password"
-          required
-          className="h-[42px] w-full rounded-md border border-outline-variant bg-surface-white pl-10 pr-10 font-body-sm text-body-sm text-slate-text outline-none transition placeholder:text-slate-muted focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
-        />
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setValidationError("");
+                verifyMutation.reset();
+              }}
+              placeholder="Password"
+              autoComplete="new-password"
+              required
+              className="h-[42px] w-full rounded-md border border-outline-variant bg-surface-white pl-10 pr-10 font-body-sm text-body-sm text-slate-text outline-none transition placeholder:text-slate-muted focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
+            />
 
-        <button
-          type="button"
-          onClick={() => setShowPassword((current) => !current)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-muted hover:text-slate-text"
-          aria-label={showPassword ? "Hide password" : "Show password"}
-        >
-          {showPassword ? (
-            <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.8} />
-          ) : (
-            <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} />
-          )}
-        </button>
-      </div>
+            <button
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-muted hover:text-slate-text"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              ) : (
+                <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              )}
+            </button>
+          </div>
 
-      {/* Confirm Password */}
-      <div className="relative">
-        <LockKeyhole
-          className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-muted"
-          strokeWidth={1.8}
-        />
+          {/* Confirm Password */}
+          <div className="relative">
+            <LockKeyhole
+              className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-muted"
+              strokeWidth={1.8}
+            />
 
-        <input
-          type={showConfirmPassword ? "text" : "password"}
-          value={confirmPassword}
-          onChange={(event) => {
-            setConfirmPassword(event.target.value);
-            setValidationError("");
-          }}
-          placeholder="Confirm Password"
-          autoComplete="new-password"
-          required
-          className="h-[42px] w-full rounded-md border border-outline-variant bg-surface-white pl-10 pr-10 font-body-sm text-body-sm text-slate-text outline-none transition placeholder:text-slate-muted focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
-        />
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(event) => {
+                setConfirmPassword(event.target.value);
+                setValidationError("");
+                verifyMutation.reset();
+              }}
+              placeholder="Confirm Password"
+              autoComplete="new-password"
+              required
+              className="h-[42px] w-full rounded-md border border-outline-variant bg-surface-white pl-10 pr-10 font-body-sm text-body-sm text-slate-text outline-none transition placeholder:text-slate-muted focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
+            />
 
-        <button
-          type="button"
-          onClick={() => setShowConfirmPassword((current) => !current)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-muted hover:text-slate-text"
-          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-        >
-          {showConfirmPassword ? (
-            <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.8} />
-          ) : (
-            <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} />
-          )}
-        </button>
-      </div>
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((current) => !current)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-muted hover:text-slate-text"
+              aria-label={
+                showConfirmPassword ? "Hide password" : "Show password"
+              }
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              ) : (
+                <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} />
+              )}
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="rounded-md bg-blue-50 px-4 py-3 text-center">
+          <p className="text-sm font-medium text-midnight-indigo">
+            Your new email address is ready to be verified.
+          </p>
 
-      {/* Error */}
+          <p className="mt-1 text-xs text-slate-muted">
+            Click the button below to verify your email. Your current password
+            will remain unchanged.
+          </p>
+        </div>
+      )}
+
       {(validationError || verifyMutation.isError) && (
         <div className="mt-3 rounded-md bg-red-50 px-3 py-2 font-body-sm text-body-sm text-red-600">
           {validationError || getBackendErrorMessage()}
         </div>
       )}
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={verifyMutation.isPending}
-        className="mt-4 h-[38px] w-full rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-4 h-[38px] w-full cursor-pointer rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {verifyMutation.isPending ? "Verifying..." : "Verify & Continue"}
+        {verifyMutation.isPending
+          ? "Verifying..."
+          : requiresPassword
+            ? "Verify & Continue"
+            : "Verify Email"}
       </button>
     </form>
   );

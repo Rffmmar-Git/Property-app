@@ -10,6 +10,7 @@ import reservationRouter from "./reservation.route";
 import reviewRouter from "./review.routes";
 import reportRouter from "./report.route";
 import paymentRouter from "./payment.route";
+import profileRouter from "./profile.route";
 
 import { authenticate } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
@@ -44,6 +45,8 @@ router.use("/auth", authRouter);
 router.use("/auth/google", googleRouter);
 
 router.use("/tenant", tenantRouter);
+
+router.use("/profile", profileRouter);
 
 router.use("/properties/categories", propertyCategoryRouter);
 

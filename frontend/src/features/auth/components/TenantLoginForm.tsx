@@ -75,7 +75,7 @@ export function TenantLoginForm() {
         <button
           type="button"
           onClick={() => setShowPassword((current) => !current)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-muted hover:text-slate-text"
+          className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-muted hover:text-slate-text"
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? (
@@ -97,7 +97,7 @@ export function TenantLoginForm() {
       <button
         type="submit"
         disabled={loginMutation.isPending}
-        className="mt-4 h-[38px] w-full rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-4 h-[38px] w-full cursor-pointer rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loginMutation.isPending ? "Logging in..." : "Login as Tenant"}
       </button>
@@ -108,7 +108,7 @@ export function TenantLoginForm() {
           Are you a customer?{" "}
           <Link
             to="/login"
-            className="font-label-bold text-label-bold text-midnight-indigo hover:underline"
+            className="cursor-pointer font-label-bold text-label-bold text-midnight-indigo hover:underline"
           >
             Customer Login
           </Link>

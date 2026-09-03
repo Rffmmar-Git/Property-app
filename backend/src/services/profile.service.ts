@@ -1,10 +1,8 @@
 import bcrypt from "bcrypt";
+
 import { authRepository } from "../repositories/auth.repository";
 import { profileRepository } from "../repositories/profile.repository";
-import {
-  generateToken,
-  sendVerificationEmail,
-} from "../utils/auth";
+import { generateToken, sendVerificationEmail } from "../utils/auth";
 import { ApiError } from "../utils/core";
 import {
   UpdateEmailInput,
@@ -26,14 +24,13 @@ export class ProfileService {
       fullName: user.full_name,
       email: user.email,
       role: user.role,
+      provider: user.provider,
       isVerified: user.is_verified,
+      profilePicture: user.profile_picture,
     };
   }
 
-  async updateProfile(
-    userId: string,
-    data: UpdateProfileInput,
-  ) {
+  async updateProfile(userId: string, data: UpdateProfileInput) {
     const user = await profileRepository.findUserById(BigInt(userId));
 
     if (!user) {
@@ -50,32 +47,31 @@ export class ProfileService {
       fullName: updatedUser.full_name,
       email: updatedUser.email,
       role: updatedUser.role,
+      provider: updatedUser.provider,
       isVerified: updatedUser.is_verified,
+      profilePicture: updatedUser.profile_picture,
     };
   }
 
-  async updateEmail(
-    userId: string,
-    data: UpdateEmailInput,
-  ) {
-    const currentUser = await profileRepository.findUserById(
-      BigInt(userId),
-    );
+  async updateEmail(userId: string, data: UpdateEmailInput) {
+    const currentUser = await profileRepository.findUserById(BigInt(userId));
 
     if (!currentUser) {
       throw new ApiError(404, "User not found");
     }
 
-    if (currentUser.email === data.email) {
+    if (currentUser.provider === "GOOGLE") {
       throw new ApiError(
-        400,
-        "New email must be different from current email",
+        403,
+        "Email cannot be changed for accounts using Google login",
       );
     }
 
-    const existingUser = await profileRepository.findUserByEmail(
-      data.email,
-    );
+    if (currentUser.email === data.email) {
+      throw new ApiError(400, "New email must be different from current email");
+    }
+
+    const existingUser = await profileRepository.findUserByEmail(data.email);
 
     if (existingUser) {
       throw new ApiError(409, "Email already exists");
@@ -86,16 +82,11 @@ export class ProfileService {
       data.email,
     );
 
-    await authRepository.invalidateVerificationTokens(
-      BigInt(userId),
-    );
+    await authRepository.invalidateVerificationTokens(BigInt(userId));
 
     const token = generateToken();
 
-    await authRepository.createEmailVerification(
-      BigInt(userId),
-      token,
-    );
+    await authRepository.createEmailVerification(BigInt(userId), token);
 
     await sendVerificationEmail(updatedUser.email, token);
 
@@ -104,17 +95,14 @@ export class ProfileService {
       fullName: updatedUser.full_name,
       email: updatedUser.email,
       role: updatedUser.role,
+      provider: updatedUser.provider,
       isVerified: updatedUser.is_verified,
+      profilePicture: updatedUser.profile_picture,
     };
   }
 
-  async changePassword(
-    userId: string,
-    data: ChangePasswordInput,
-  ) {
-    const user = await profileRepository.findUserById(
-      BigInt(userId),
-    );
+  async changePassword(userId: string, data: ChangePasswordInput) {
+    const user = await profileRepository.findUserById(BigInt(userId));
 
     if (!user) {
       throw new ApiError(404, "User not found");
@@ -133,10 +121,7 @@ export class ProfileService {
     );
 
     if (!isCurrentPasswordValid) {
-      throw new ApiError(
-        400,
-        "Current password is incorrect",
-      );
+      throw new ApiError(400, "Current password is incorrect");
     }
 
     const isSamePassword = await bcrypt.compare(
@@ -151,69 +136,51 @@ export class ProfileService {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(
-      data.newPassword,
-      10,
-    );
+    const hashedPassword = await bcrypt.hash(data.newPassword, 10);
 
-    await profileRepository.updatePassword(
-      BigInt(userId),
-      hashedPassword,
-    );
+    await profileRepository.updatePassword(BigInt(userId), hashedPassword);
 
     return {
       message: "Password changed successfully",
     };
   }
 
-  async updateProfilePicture(
-    userId: string,
-    file: Express.Multer.File,
-  ) {
-    const user = await profileRepository.findUserById(
-      BigInt(userId),
-    );
+  async updateProfilePicture(userId: string, file: Express.Multer.File) {
+    const user = await profileRepository.findUserById(BigInt(userId));
 
     if (!user) {
       throw new ApiError(404, "User not found");
     }
 
-    const imageUrl = await new Promise<string>(
-      (resolve, reject) => {
-        const uploadStream =
-          cloudinary.uploader.upload_stream(
-            {
-              folder: "property-app/profile-pictures",
-              resource_type: "image",
-            },
-            (error, result) => {
-              if (error || !result) {
-                return reject(
-                  new Error(
-                    "Failed to upload profile picture",
-                  ),
-                );
-              }
+    const imageUrl = await new Promise<string>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "property-app/profile-pictures",
+          resource_type: "image",
+        },
+        (error, result) => {
+          if (error || !result) {
+            return reject(new Error("Failed to upload profile picture"));
+          }
 
-              resolve(result.secure_url);
-            },
-          );
-
-        uploadStream.end(file.buffer);
-      },
-    );
-
-    const updatedUser =
-      await profileRepository.updateProfilePicture(
-        BigInt(userId),
-        imageUrl,
+          resolve(result.secure_url);
+        },
       );
+
+      uploadStream.end(file.buffer);
+    });
+
+    const updatedUser = await profileRepository.updateProfilePicture(
+      BigInt(userId),
+      imageUrl,
+    );
 
     return {
       id: updatedUser.id.toString(),
       fullName: updatedUser.full_name,
       email: updatedUser.email,
       role: updatedUser.role,
+      provider: updatedUser.provider,
       isVerified: updatedUser.is_verified,
       profilePicture: updatedUser.profile_picture,
     };

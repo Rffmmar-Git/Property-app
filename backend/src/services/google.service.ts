@@ -7,18 +7,13 @@ export class GoogleService {
   async getAuthorizationUrl() {
     return googleOAuth2Client.generateAuthUrl({
       access_type: "offline",
-      scope: [
-        "openid",
-        "email",
-        "profile",
-      ],
+      scope: ["openid", "email", "profile"],
       prompt: "select_account",
     });
   }
 
   async handleCallback(code: string) {
-    const { tokens } =
-      await googleOAuth2Client.getToken(code);
+    const { tokens } = await googleOAuth2Client.getToken(code);
 
     googleOAuth2Client.setCredentials(tokens);
 
@@ -30,21 +25,16 @@ export class GoogleService {
     const payload = ticket.getPayload();
 
     if (!payload || !payload.email) {
-      throw new ApiError(
-        400,
-        "Unable to retrieve Google account information",
-      );
+      throw new ApiError(400, "Unable to retrieve Google account information");
     }
 
     const email = payload.email;
-    const fullName =
-      payload.name ?? email.split("@")[0];
 
-    const profilePicture =
-      payload.picture ?? undefined;
+    const fullName = payload.name ?? email.split("@")[0];
 
-    let user =
-      await authRepository.findUserByEmail(email);
+    const profilePicture = payload.picture ?? undefined;
+
+    let user = await authRepository.findUserByEmail(email);
 
     if (!user) {
       user = await authRepository.createGoogleUser(
@@ -54,10 +44,7 @@ export class GoogleService {
       );
     } else {
       if (user.role !== "CUSTOMER") {
-        throw new ApiError(
-          403,
-          "Google login is only available for customers",
-        );
+        throw new ApiError(403, "Google login is only available for customers");
       }
 
       if (user.provider !== "GOOGLE") {
@@ -80,6 +67,7 @@ export class GoogleService {
         fullName: user.full_name,
         email: user.email,
         role: user.role,
+        profilePicture: user.profile_picture,
       },
     };
   }
