@@ -5,57 +5,42 @@ import PropertyListingPage from "../pages/property/PropertyListingPage";
 import PropertyDetailPage from "../pages/property/PropertyDetailPage";
 
 import LoginPage from "../pages/auth/LoginPage";
+import TenantLoginPage from "../pages/auth/TenantLoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
 import TenantRegisterPage from "../pages/auth/TenantRegisterPage";
 import CheckEmailPage from "../pages/auth/CheckEmailPage";
 import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
+import GoogleCallbackPage from "../pages/auth/GoogleCallbackPage";
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Home */}
-        <Route
-          path="/"
-          element={<HomePage />}
-        />
+        {/* Customer / Public Routes */}
+        <Route path="/" element={<HomePage />} />
 
         {/* Property */}
-        <Route
-          path="/properties"
-          element={<PropertyListingPage />}
-        />
+        <Route path="/properties" element={<PropertyListingPage />} />
 
-        <Route
-          path="/properties/:id"
-          element={<PropertyDetailPage />}
-        />
+        <Route path="/properties/:id" element={<PropertyDetailPage />} />
 
-        {/* Public Auth Routes */}
-        <Route
-          path="/login"
-          element={<LoginPage />}
-        />
+        {/* Customer Auth Routes */}
+        <Route path="/login" element={<LoginPage />} />
 
-        <Route
-          path="/register"
-          element={<RegisterPage />}
-        />
+        <Route path="/register" element={<RegisterPage />} />
 
-        <Route
-          path="/register/tenant"
-          element={<TenantRegisterPage />}
-        />
+        {/* Tenant Auth Routes */}
+        <Route path="/tenant/login" element={<TenantLoginPage />} />
 
-        <Route
-          path="/check-email"
-          element={<CheckEmailPage />}
-        />
+        <Route path="/register/tenant" element={<TenantRegisterPage />} />
 
-        <Route
-          path="/verify-email"
-          element={<VerifyEmailPage />}
-        />
+        {/* Google OAuth */}
+        <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+
+        {/* Email Verification */}
+        <Route path="/check-email" element={<CheckEmailPage />} />
+
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
       </Routes>
     </BrowserRouter>
   );

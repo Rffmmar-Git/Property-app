@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import authRouter from "./auth.route";
+import googleRouter from "./google.route";
 import tenantRouter from "./tenant.route";
 import propertyRouter from "./property.route";
 import propertyCategoryRouter from "./property-category.route";
@@ -40,6 +41,8 @@ router.get("/me", authenticate, authorize(user_role.CUSTOMER), (req, res) => {
 
 router.use("/auth", authRouter);
 
+router.use("/auth/google", googleRouter);
+
 router.use("/tenant", tenantRouter);
 
 router.use("/properties/categories", propertyCategoryRouter);
@@ -54,6 +57,6 @@ router.use("/payments", paymentRouter);
 
 router.use("/reviews", reviewRouter);
 
-router.use("reports", reportRouter);
+router.use("/reports", reportRouter);
 
 export default router;

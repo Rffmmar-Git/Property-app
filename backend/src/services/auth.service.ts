@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
+
 import { authRepository } from "../repositories/auth.repository";
 import { ApiError } from "../utils/core";
+
 import {
   generateAccessToken,
   generateToken,
@@ -15,6 +17,8 @@ import {
   ForgotPasswordInput,
   ResetPasswordInput,
 } from "../validations/auth";
+
+import { user_role } from "../generated/prisma/enums";
 
 export class AuthService {
   async register(data: RegisterInput) {
@@ -69,8 +73,7 @@ export class AuthService {
 
     if (!user) {
       return {
-        message:
-          "If the email exists, a reset password link has been sent",
+        message: "If the email exists, a reset password link has been sent",
       };
     }
 
@@ -90,14 +93,12 @@ export class AuthService {
     await sendResetPasswordEmail(user.email, token);
 
     return {
-      message:
-        "If the email exists, a reset password link has been sent",
+      message: "If the email exists, a reset password link has been sent",
     };
   }
 
   async resetPassword(data: ResetPasswordInput) {
-    const reset =
-      await authRepository.findPasswordResetToken(data.token);
+    const reset = await authRepository.findPasswordResetToken(data.token);
 
     if (!reset) {
       throw new ApiError(400, "Invalid reset token");
@@ -113,27 +114,48 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    await authRepository.resetPassword(
-      reset.user_id,
-      reset.id,
-      hashedPassword,
-    );
+    await authRepository.resetPassword(reset.user_id, reset.id, hashedPassword);
 
     return {
       message: "Password has been reset successfully",
     };
   }
 
-  async verifyEmail(token: string, password?: string) {
-    const verification =
-      await authRepository.findVerificationToken(token);
+  async validateVerificationToken(token: string) {
+    const verification = await authRepository.findVerificationToken(token);
 
     if (!verification) {
       throw new ApiError(400, "Invalid verification token");
     }
 
     if (verification.used_at) {
-      throw new ApiError(400, "Verification token already used");
+      throw new ApiError(
+        400,
+        "Verification link is no longer valid or has been used",
+      );
+    }
+
+    if (verification.expires_at < new Date()) {
+      throw new ApiError(400, "Verification token has expired");
+    }
+
+    return {
+      valid: true,
+    };
+  }
+
+  async verifyEmail(token: string, password?: string) {
+    const verification = await authRepository.findVerificationToken(token);
+
+    if (!verification) {
+      throw new ApiError(400, "Invalid verification token");
+    }
+
+    if (verification.used_at) {
+      throw new ApiError(
+        400,
+        "Verification link is no longer valid or has been used",
+      );
     }
 
     if (verification.expires_at < new Date()) {
@@ -170,15 +192,12 @@ export class AuthService {
   async login(data: LoginInput) {
     const user = await authRepository.findUserByEmail(data.email);
 
-    if (!user) {
+    if (!user || user.role !== user_role.CUSTOMER) {
       throw new ApiError(401, "Invalid email or password");
     }
 
     if (!user.is_verified) {
-      throw new ApiError(
-        403,
-        "Please verify your email before logging in",
-      );
+      throw new ApiError(403, "Please verify your email before logging in");
     }
 
     const isPasswordValid = await bcrypt.compare(

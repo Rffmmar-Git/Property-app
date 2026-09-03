@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import { authController } from "../controllers/auth.controller";
 
 const router = Router();
@@ -6,6 +7,8 @@ const router = Router();
 router.post("/register", authController.register);
 
 router.post("/resend-verification", authController.resendVerification);
+
+router.get("/verify-email/:token", authController.validateVerificationToken);
 
 router.post("/verify-email", authController.verifyEmail);
 

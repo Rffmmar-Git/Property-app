@@ -1,10 +1,23 @@
+import bcrypt from "bcrypt";
+
 import { tenantRepository } from "../repositories/tenant.repository";
 import { authRepository } from "../repositories/auth.repository";
+
 import { ApiError } from "../utils/core";
-import { generateToken, sendVerificationEmail } from "../utils/auth";
-import { TenantRegisterInput } from "../validations/auth";
+
+import {
+  generateAccessToken,
+  generateToken,
+  sendVerificationEmail,
+} from "../utils/auth";
+
+import { TenantRegisterInput, LoginInput } from "../validations/auth";
+
 import { UpdateTenantProfileInput } from "../validations/profile";
+
 import cloudinary from "../config/cloudinary";
+
+import { user_role } from "../generated/prisma/enums";
 
 export class TenantService {
   async register(data: TenantRegisterInput) {
@@ -28,6 +41,42 @@ export class TenantService {
       email: user.email,
       role: user.role,
       isVerified: user.is_verified,
+    };
+  }
+
+  async login(data: LoginInput) {
+    const user = await authRepository.findUserByEmail(data.email);
+
+    if (!user || user.role !== user_role.TENANT) {
+      throw new ApiError(401, "Invalid email or password");
+    }
+
+    if (!user.is_verified) {
+      throw new ApiError(403, "Please verify your email before logging in");
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      data.password,
+      user.password ?? "",
+    );
+
+    if (!isPasswordValid) {
+      throw new ApiError(401, "Invalid email or password");
+    }
+
+    const accessToken = generateAccessToken({
+      userId: user.id.toString(),
+      role: user.role,
+    });
+
+    return {
+      accessToken,
+      user: {
+        id: user.id.toString(),
+        fullName: user.full_name,
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 

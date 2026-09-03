@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useLogin } from "../hooks/useLogin";
+import { useTenantLogin } from "../hooks/useTenantLogin";
 
-export function LoginForm() {
+export function TenantLoginForm() {
   const navigate = useNavigate();
-  const loginMutation = useLogin();
+  const loginMutation = useTenantLogin();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,15 +22,16 @@ export function LoginForm() {
       },
       {
         onSuccess: () => {
-          navigate("/");
+          navigate("/tenant");
         },
       },
     );
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8000/api/auth/google";
-  };
+  const errorMessage =
+    loginMutation.error instanceof Error
+      ? loginMutation.error.message
+      : "Unable to login.";
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
@@ -42,7 +43,7 @@ export function LoginForm() {
         />
 
         <input
-          id="email"
+          id="tenant-email"
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -61,7 +62,7 @@ export function LoginForm() {
         />
 
         <input
-          id="password"
+          id="tenant-password"
           type={showPassword ? "text" : "password"}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -85,20 +86,10 @@ export function LoginForm() {
         </button>
       </div>
 
-      {/* Forgot password */}
-      <div className="mt-3 flex justify-end">
-        <Link
-          to="/forgot-password"
-          className="font-label-sm text-label-sm text-midnight-indigo hover:underline"
-        >
-          Forgot password?
-        </Link>
-      </div>
-
       {/* Error message */}
       {loginMutation.isError && (
         <div className="mt-3 rounded-md bg-red-50 px-3 py-2 font-body-sm text-body-sm text-red-600">
-          Invalid email or password.
+          {errorMessage}
         </div>
       )}
 
@@ -108,50 +99,18 @@ export function LoginForm() {
         disabled={loginMutation.isPending}
         className="mt-4 h-[38px] w-full rounded-md bg-sunrise-amber font-label-bold text-label-bold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loginMutation.isPending ? "Logging in..." : "Login"}
+        {loginMutation.isPending ? "Logging in..." : "Login as Tenant"}
       </button>
 
-      {/* Tenant Login */}
-      <div className="mt-3 text-center">
-        <p className="font-body-sm text-body-sm text-slate-muted">
-          Are you a tenant?{" "}
-          <Link
-            to="/tenant/login"
-            className="font-label-bold text-label-bold text-midnight-indigo hover:underline"
-          >
-            Login here
-          </Link>
-        </p>
-      </div>
-
-      {/* Divider */}
-      <div className="my-5 flex items-center gap-3">
-        <div className="h-px flex-1 bg-outline-variant" />
-
-        <span className="font-label-sm text-label-sm text-slate-muted">OR</span>
-
-        <div className="h-px flex-1 bg-outline-variant" />
-      </div>
-
-      {/* Google Login */}
-      <button
-        type="button"
-        onClick={handleGoogleLogin}
-        className="flex h-[40px] w-full items-center justify-center gap-2 rounded-md border border-outline-variant bg-surface-white font-label-bold text-label-bold text-slate-text transition hover:bg-surface"
-      >
-        <span className="font-bold text-[#4285F4]">G</span>
-        Continue with Google
-      </button>
-
-      {/* Register */}
+      {/* Customer login */}
       <div className="mt-5 border-t border-outline-variant pt-4 text-center">
         <p className="font-body-sm text-body-sm text-slate-muted">
-          Don't have an account?{" "}
+          Are you a customer?{" "}
           <Link
-            to="/register"
+            to="/login"
             className="font-label-bold text-label-bold text-midnight-indigo hover:underline"
           >
-            Register
+            Customer Login
           </Link>
         </p>
       </div>

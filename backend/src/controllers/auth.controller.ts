@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../utils";
-import { ApiResponse } from "../utils";
+
+import { asyncHandler, ApiResponse } from "../utils";
+
 import {
   registerSchema,
   loginSchema,
@@ -9,6 +10,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
 } from "../validations/auth";
+
 import { authService } from "../services/auth.service";
 
 export class AuthController {
@@ -17,72 +19,73 @@ export class AuthController {
 
     const result = await authService.register(data);
 
-    return res.status(201).json(
-      new ApiResponse(
-        true,
-        "Registration successful. Please check your email to verify your account.",
-        result
-      )
-    );
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          true,
+          "Registration successful. Please check your email to verify your account.",
+          result,
+        ),
+      );
   });
 
-  resendVerification = asyncHandler(
+  resendVerification = asyncHandler(async (req: Request, res: Response) => {
+    const data = resendVerificationSchema.parse(req.body);
+
+    const result = await authService.resendVerification(data);
+
+    return res.status(200).json(new ApiResponse(true, result.message, null));
+  });
+
+  validateVerificationToken = asyncHandler(
     async (req: Request, res: Response) => {
-      const data = resendVerificationSchema.parse(req.body);
+      const token = req.params.token;
 
-      const result = await authService.resendVerification(data);
+      if (typeof token !== "string") {
+        throw new Error("Verification token is required");
+      }
 
-      return res.status(200).json(
-        new ApiResponse(true, result.message, null)
-      );
-    }
+      const result = await authService.validateVerificationToken(token);
+
+      return res
+        .status(200)
+        .json(new ApiResponse(true, "Verification token is valid", result));
+    },
   );
 
   verifyEmail = asyncHandler(async (req: Request, res: Response) => {
     const data = verifyEmailSchema.parse(req.body);
 
-    const result = await authService.verifyEmail(
-      data.token,
-      data.password
-    );
+    const result = await authService.verifyEmail(data.token, data.password);
 
-    return res.status(200).json(
-      new ApiResponse(true, result.message, null)
-    );
+    return res.status(200).json(new ApiResponse(true, result.message, null));
   });
 
-  forgotPassword = asyncHandler(
-    async (req: Request, res: Response) => {
-      const data = forgotPasswordSchema.parse(req.body);
+  forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+    const data = forgotPasswordSchema.parse(req.body);
 
-      const result = await authService.forgotPassword(data);
+    const result = await authService.forgotPassword(data);
 
-      return res.status(200).json(
-        new ApiResponse(true, result.message, null)
-      );
-    }
-  );
+    return res.status(200).json(new ApiResponse(true, result.message, null));
+  });
 
-  resetPassword = asyncHandler(
-    async (req: Request, res: Response) => {
-      const data = resetPasswordSchema.parse(req.body);
+  resetPassword = asyncHandler(async (req: Request, res: Response) => {
+    const data = resetPasswordSchema.parse(req.body);
 
-      const result = await authService.resetPassword(data);
+    const result = await authService.resetPassword(data);
 
-      return res.status(200).json(
-        new ApiResponse(true, result.message, null)
-      );
-    }
-  );
+    return res.status(200).json(new ApiResponse(true, result.message, null));
+  });
 
   login = asyncHandler(async (req: Request, res: Response) => {
     const data = loginSchema.parse(req.body);
 
     const result = await authService.login(data);
 
-    return res.status(200).json(
-      new ApiResponse(true, "Login successful", result)
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(true, "Login successful", result));
   });
 }
 

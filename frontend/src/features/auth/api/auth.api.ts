@@ -1,9 +1,6 @@
 import { api } from "../../../services/api/axios";
 
-import type {
-  LoginResponse,
-  RegisterResponse,
-} from "../../../types/auth";
+import type { LoginResponse, RegisterResponse } from "../../../types/auth";
 
 export interface LoginPayload {
   email: string;
@@ -35,14 +32,24 @@ export interface ResendVerificationPayload {
   email: string;
 }
 
-export const login = async (
+export const login = async (payload: LoginPayload): Promise<LoginResponse> => {
+  const response = await api.post<{
+    success: boolean;
+    message: string;
+    data: LoginResponse;
+  }>("/auth/login", payload);
+
+  return response.data.data;
+};
+
+export const tenantLogin = async (
   payload: LoginPayload,
 ): Promise<LoginResponse> => {
   const response = await api.post<{
     success: boolean;
     message: string;
     data: LoginResponse;
-  }>("/auth/login", payload);
+  }>("/tenant/login", payload);
 
   return response.data.data;
 };
@@ -71,9 +78,19 @@ export const registerTenant = async (
   return response.data.data;
 };
 
-export const verifyEmail = async (
-  payload: VerifyEmailPayload,
-) => {
+export const validateVerificationToken = async (token: string) => {
+  const response = await api.get<{
+    success: boolean;
+    message: string;
+    data: {
+      valid: boolean;
+    };
+  }>(`/auth/verify-email/${token}`);
+
+  return response.data.data;
+};
+
+export const verifyEmail = async (payload: VerifyEmailPayload) => {
   const response = await api.post<{
     success: boolean;
     message: string;
