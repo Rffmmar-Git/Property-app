@@ -7,7 +7,7 @@ import { user_role } from "../generated/prisma/enums";
 const router = Router();
 router.use(
   authenticate,
-  authorize(user_role.CUSTOMER)
+  authorize(user_role.TENANT)
 );
 
 /**

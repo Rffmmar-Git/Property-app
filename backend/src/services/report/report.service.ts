@@ -8,12 +8,12 @@ import {
   PropertyReportQueryDto,
 } from "../../types/dto";
 
-import { ApiError } from "../../utils";
+import { ReportMapperService } from "./report-mapper.service";
 
 export class ReportService {
   constructor(
-    private readonly reportRepository:
-      ReportRepository
+    private readonly reportRepository: ReportRepository,
+    private readonly mapperService: ReportMapperService
   ) {}
 
   //#region Sales Report
@@ -22,17 +22,20 @@ export class ReportService {
     tenantId: number,
     query: SalesReportQueryDto
   ) {
-    this.validatePropertyId(
-      query.propertyId
-    );
+    const result =
+      await this.reportRepository
+        .findSalesReport(
+          tenantId,
+          query
+        );
 
-    await this.validatePropertyOwnership(
-      tenantId,
-      query.propertyId!
-    );
-
-    return this.reportRepository
-      .findSalesReport(query);
+    return this.mapperService
+      .buildSalesReportResponse(
+        result.reservations,
+        result.total,
+        query.page ?? 1,
+        query.limit ?? 10
+      );
   }
 
   //#endregion
@@ -43,17 +46,20 @@ export class ReportService {
     tenantId: number,
     query: TransactionReportQueryDto
   ) {
-    this.validatePropertyId(
-      query.propertyId
-    );
+    const result =
+      await this.reportRepository
+        .findTransactionReport(
+          tenantId,
+          query
+        );
 
-    await this.validatePropertyOwnership(
-      tenantId,
-      query.propertyId!
-    );
-
-    return this.reportRepository
-      .findTransactionReport(query);
+    return this.mapperService
+      .buildTransactionReportResponse(
+        result.reservations,
+        result.total,
+        query.page ?? 1,
+        query.limit ?? 10
+      );
   }
 
   //#endregion
@@ -64,53 +70,17 @@ export class ReportService {
     tenantId: number,
     query: PropertyReportQueryDto
   ) {
-    this.validatePropertyId(
-      query.propertyId
-    );
-
-    await this.validatePropertyOwnership(
-      tenantId,
-      query.propertyId!
-    );
-
-    return this.reportRepository
-      .findPropertyReport(query);
-  }
-
-  //#endregion
-
-  //#region Validation
-
-  private validatePropertyId(
-    propertyId?: number
-  ): void {
-    if (
-      propertyId === undefined
-    ) {
-      throw new ApiError(
-        400,
-        "Property ID is required."
-      );
-    }
-  }
-
-  private async validatePropertyOwnership(
-    tenantId: number,
-    propertyId: number
-  ): Promise<void> {
-    const isOwner =
+    const result =
       await this.reportRepository
-        .isPropertyOwnedByTenant(
-          propertyId,
-          tenantId
+        .findPropertyReport(
+          tenantId,
+          query
         );
 
-    if (!isOwner) {
-      throw new ApiError(
-        403,
-        "You are not authorized to access this property report."
+    return this.mapperService
+      .buildPropertyReportResponse(
+        result
       );
-    }
   }
 
   //#endregion
@@ -121,9 +91,13 @@ export class ReportService {
 const reportRepository =
   new ReportRepository();
 
+const reportMapperService =
+  new ReportMapperService();
+
 export const reportService =
   new ReportService(
-    reportRepository
+    reportRepository,
+    reportMapperService
   );
 
 //#endregion

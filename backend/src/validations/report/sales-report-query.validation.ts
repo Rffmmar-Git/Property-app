@@ -28,7 +28,7 @@ export const salesReportQuerySchema = z.object({
     .date()
     .optional(),
 
-  ssortBy: z
+  sortBy: z
   .enum([
     "check_in",
     "created_at",

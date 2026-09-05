@@ -1,11 +1,6 @@
-import { ReportRepository } from "../../repositories";
 import { ApiError } from "../../utils";
-export class ReportValidationService {
-  constructor(
-    private readonly reportRepository:
-      ReportRepository
-  ) {}
 
+export class ReportValidationService {
   validateDateRange(
     startDate?: Date,
     endDate?: Date
@@ -68,29 +63,6 @@ export class ReportValidationService {
       throw new ApiError(
         400,
         "Month is required when year is provided."
-      );
-    }
-  }
-
-  async validatePropertyOwnership(
-    tenantId: number,
-    propertyId?: number
-  ): Promise<void> {
-    if (propertyId === undefined) {
-      return;
-    }
-
-    const isOwner =
-      await this.reportRepository
-        .isPropertyOwnedByTenant(
-          propertyId,
-          tenantId
-        );
-
-    if (!isOwner) {
-      throw new ApiError(
-        403,
-        "You are not authorized to access this property report."
       );
     }
   }

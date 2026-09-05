@@ -3,8 +3,9 @@ import { Router } from "express";
 import authRouter from "./auth.route";
 import googleRouter from "./google.route";
 import tenantRouter from "./tenant.route";
-import propertyRouter from "./property.route";
+import tenantPropertyRouter from "./tenant-property.route";
 import propertyCategoryRouter from "./property-category.route";
+import propertyRouter from "./property.route";
 import destinationRouter from "./destination.route";
 import reservationRouter from "./reservation.route";
 import reviewRouter from "./review.routes";
@@ -18,10 +19,6 @@ import { user_role } from "../generated/prisma/enums";
 
 const router = Router();
 
-/**
- * Health Check
- * GET /api/health
- */
 router.get("/health", (_req, res) => {
   res.status(200).json({
     success: true,
@@ -29,10 +26,6 @@ router.get("/health", (_req, res) => {
   });
 });
 
-/**
- * Current authenticated user
- * GET /api/me
- */
 router.get("/me", authenticate, authorize(user_role.CUSTOMER), (req, res) => {
   res.status(200).json({
     success: true,
@@ -47,6 +40,8 @@ router.use("/auth/google", googleRouter);
 router.use("/tenant", tenantRouter);
 
 router.use("/profile", profileRouter);
+
+router.use("/tenant/properties", tenantPropertyRouter);
 
 router.use("/properties/categories", propertyCategoryRouter);
 

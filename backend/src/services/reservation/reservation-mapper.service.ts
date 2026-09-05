@@ -95,6 +95,9 @@ export class ReservationMapperService {
 
         paymentStatus:
           reservation.payments?.status ?? null,
+        
+        paymentProof:
+          reservation.payments?.proof_image ?? null,
       },
     };
   }

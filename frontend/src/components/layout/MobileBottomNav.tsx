@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Search, Heart, User } from "lucide-react";
+import { Home, Heart, Calendar, User } from "lucide-react"; // Hapus Search, tambahkan Calendar
 import type { ComponentType } from "react";
 
 interface NavItem {
@@ -10,8 +10,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", path: "/", icon: Home },
-  { label: "Explore", path: "/explore", icon: Search },
   { label: "Saved", path: "/saved", icon: Heart },
+  { label: "Reservations", path: "/my-reservations", icon: Calendar }, // Menggantikan Explore
   { label: "Profile", path: "/profile", icon: User },
 ];
 

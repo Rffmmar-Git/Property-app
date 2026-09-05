@@ -4,13 +4,15 @@ export class ReportMapperService {
   //#region Sales Report
 
   buildSalesReportResponse(
-    reservations: any[]
-  ) {
-    return reservations.map(
+  reservations: any[],
+  total: number,
+  page: number,
+  limit: number
+) {
+  return {
+    data: reservations.map(
       (reservation) => ({
-        id: Number(
-          reservation.id
-        ),
+        id: Number(reservation.id),
 
         bookingCode:
           reservation.booking_code,
@@ -29,13 +31,11 @@ export class ReportMapperService {
 
         property: {
           id: Number(
-            reservation.rooms
-              .properties.id
+            reservation.rooms.properties.id
           ),
 
           name:
-            reservation.rooms
-              .properties.name,
+            reservation.rooms.properties.name,
         },
 
         room: {
@@ -44,8 +44,7 @@ export class ReportMapperService {
           ),
 
           roomName:
-            reservation.rooms
-              .room_name,
+            reservation.rooms.room_name,
         },
 
         checkIn:
@@ -63,47 +62,53 @@ export class ReportMapperService {
           reservation.payments
             ? {
                 id: Number(
-                  reservation
-                    .payments.id
+                  reservation.payments.id
                 ),
 
                 paymentMethod:
-                  reservation
-                    .payments
+                  reservation.payments
                     .payment_method,
 
                 paymentAmount:
                   Number(
-                    reservation
-                      .payments
+                    reservation.payments
                       .payment_amount
                   ),
 
                 status:
-                  reservation
-                    .payments.status,
+                  reservation.payments.status,
 
                 paidAt:
-                  reservation
-                    .payments.paid_at,
+                  reservation.payments.paid_at,
               }
             : null,
       })
-    );
-  }
+    ),
 
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(
+        total / limit
+      ),
+    },
+  };
+}
   //#endregion
 
   //#region Transaction Report
 
   buildTransactionReportResponse(
-    reservations: any[]
-  ) {
-    return reservations.map(
+  reservations: any[],
+  total: number,
+  page: number,
+  limit: number
+) {
+  return {
+    data: reservations.map(
       (reservation) => ({
-        id: Number(
-          reservation.id
-        ),
+        id: Number(reservation.id),
 
         bookingCode:
           reservation.booking_code,
@@ -125,13 +130,11 @@ export class ReportMapperService {
 
         property: {
           id: Number(
-            reservation.rooms
-              .properties.id
+            reservation.rooms.properties.id
           ),
 
           name:
-            reservation.rooms
-              .properties.name,
+            reservation.rooms.properties.name,
         },
 
         room: {
@@ -140,8 +143,7 @@ export class ReportMapperService {
           ),
 
           roomName:
-            reservation.rooms
-              .room_name,
+            reservation.rooms.room_name,
         },
 
         checkIn:
@@ -162,34 +164,39 @@ export class ReportMapperService {
           reservation.payments
             ? {
                 id: Number(
-                  reservation
-                    .payments.id
+                  reservation.payments.id
                 ),
 
                 paymentMethod:
-                  reservation
-                    .payments
+                  reservation.payments
                     .payment_method,
 
                 paymentAmount:
                   Number(
-                    reservation
-                      .payments
+                    reservation.payments
                       .payment_amount
                   ),
 
                 status:
-                  reservation
-                    .payments.status,
+                  reservation.payments.status,
 
                 paidAt:
-                  reservation
-                    .payments.paid_at,
+                  reservation.payments.paid_at,
               }
             : null,
       })
-    );
-  }
+    ),
+
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(
+        total / limit
+      ),
+    },
+  };
+}
 
   //#endregion
 

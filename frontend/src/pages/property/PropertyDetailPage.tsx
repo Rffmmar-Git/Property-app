@@ -77,12 +77,10 @@ export default function PropertyDetailPage() {
 
   const [selectedImage, setSelectedImage] = useState(0);
 
-  const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>(
-    undefined,
-  );
+  const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>( undefined, );
 
   const [calendarStart, setCalendarStart] = useState(0);
-
+  
   const [checkIn, setCheckIn] = useState<string | null>(null);
 
   const [checkOut, setCheckOut] = useState<string | null>(null);
@@ -203,137 +201,99 @@ export default function PropertyDetailPage() {
   };
 
   const handleRoomSelect = (roomId: string) => {
-    if (roomId === selectedRoomId) {
-      document.getElementById("availability-calendar")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-
-      return;
-    }
-
-    /*
-     * Changing the room also resets the selected
-     * dates because availability and pricing are
-     * room-specific.
-     */
-    setSelectedRoomId(roomId);
-    setCalendarStart(0);
-    setCheckIn(null);
-    setCheckOut(null);
-    setDateSelectionError("");
-
-    window.setTimeout(() => {
-      document.getElementById("availability-calendar")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 0);
-  };
-
-  const handleDateSelect = (date: string, available: boolean) => {
-    if (!available) {
-      return;
-    }
-
-    setDateSelectionError("");
-
-    /*
-     * First click:
-     * Set check-in.
-     */
-    if (!checkIn || checkOut) {
-      setCheckIn(date);
-      setCheckOut(null);
-      return;
-    }
-
-    /*
-     * Clicking an earlier date changes the
-     * check-in instead of creating an invalid range.
-     */
-    if (date <= checkIn) {
-      setCheckIn(date);
-      setCheckOut(null);
-      return;
-    }
-
-    /*
-     * Second click:
-     * Set check-out.
-     */
-    const potentialStayDates: string[] = [];
-
-    let currentDate = checkIn;
-
-    while (currentDate < date) {
-      potentialStayDates.push(currentDate);
-      currentDate = addDays(currentDate, 1);
-    }
-
-    const hasUnavailableDate = potentialStayDates.some((stayDate) => {
-      const calendarItem = property?.priceCalendar.find(
-        (item) => item.date === stayDate,
-      );
-
-      return (
-        !calendarItem || !calendarItem.available || calendarItem.price === null
-      );
+  if (roomId === selectedRoomId) {
+    document.getElementById("availability-calendar")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
     });
+    return;
+  }
 
-    if (hasUnavailableDate) {
-      setDateSelectionError(
-        "Your selected stay includes unavailable dates. Please choose another date range.",
-      );
+  setSelectedRoomId(roomId);
+  setCalendarStart(0);
+  setCheckIn(null);
+  setCheckOut(null);
+  setDateSelectionError("");
 
+  window.setTimeout(() => {
+    document.getElementById("availability-calendar")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 0);
+};
+const handleDateSelect = (date: string, available: boolean) => {
+  if (!available) {
+    return;
+  }
+
+  setDateSelectionError("");
+
+  // Belum memilih check-in, atau sebelumnya sudah punya range
+  if (!checkIn || checkOut) {
+    setCheckIn(date);
+    setCheckOut(null);
+    return;
+  }
+
+  // Tidak boleh memilih check-out sebelum / sama dengan check-in
+  if (date <= checkIn) {
+    setCheckIn(date);
+    setCheckOut(null);
+    return;
+  }
+
+  const potentialStayDates: string[] = [];
+  let currentDate = checkIn;
+
+  while (currentDate < date) {
+    potentialStayDates.push(currentDate);
+    currentDate = addDays(currentDate, 1);
+  }
+
+  const hasUnavailableDate = potentialStayDates.some((stayDate) => {
+    const calendarItem = property?.priceCalendar.find(
+      (item) => item.date === stayDate,
+    );
+
+    return (
+      !calendarItem ||
+      !calendarItem.available ||
+      calendarItem.price === null
+    );
+  });
+
+  if (hasUnavailableDate) {
+    setDateSelectionError(
+      "Your selected stay includes unavailable dates. Please choose another date range.",
+    );
+    return;
+  }
+
+  setCheckOut(date);
+};
+const handleShare = async () => {
+  if (!property) {
+    return;
+  }
+
+  const shareData = {
+    title: property.name,
+    text: `Check out ${property.name}`,
+    url: window.location.href,
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
       return;
     }
 
-    setCheckOut(date);
-  };
-
-  const handleContinueToBooking = () => {
-    if (
-      !id ||
-      !activeRoomId ||
-      !checkIn ||
-      !checkOut ||
-      !isSelectedStayAvailable
-    ) {
-      return;
-    }
-
-    const searchParams = new URLSearchParams();
-
-    searchParams.set("roomId", activeRoomId);
-    searchParams.set("checkIn", checkIn);
-    searchParams.set("checkOut", checkOut);
-
-    navigate(`/properties/${id}/reservation?${searchParams.toString()}`);
-  };
-
-  const handleShare = async () => {
-    if (!property) {
-      return;
-    }
-
-    const shareData = {
-      title: property.name,
-      text: `Check out ${property.name}`,
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-        return;
-      }
-
-      await navigator.clipboard.writeText(window.location.href);
-    } catch {
-      // User cancelled the share action.
-    }
-  };
+    await navigator.clipboard.writeText(window.location.href);
+  } catch {
+    // User cancelled the share action.
+  }
+};
 
   const mapUrl =
     property?.latitude !== null &&
@@ -902,14 +862,13 @@ export default function PropertyDetailPage() {
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
                 {visibleCalendar.map((item) => {
                   const isCheckIn = checkIn === item.date;
-
                   const isCheckOut = checkOut === item.date;
 
                   const isInRange = Boolean(
                     checkIn &&
-                    checkOut &&
-                    item.date >= checkIn &&
-                    item.date < checkOut,
+                      checkOut &&
+                      item.date >= checkIn &&
+                      item.date < checkOut,
                   );
 
                   const isSelectedDate = isCheckIn || isCheckOut;
@@ -919,9 +878,7 @@ export default function PropertyDetailPage() {
                       key={item.date}
                       type="button"
                       disabled={!item.available}
-                      onClick={() =>
-                        handleDateSelect(item.date, item.available)
-                      }
+                      onClick={() => handleDateSelect(item.date, item.available)}
                       className={`relative min-h-[105px] rounded-lg border p-3 text-left transition ${
                         !item.available
                           ? "cursor-not-allowed border-slate-100 bg-slate-50"
@@ -978,86 +935,6 @@ export default function PropertyDetailPage() {
               </div>
             )}
 
-            {/* Date Selection Instructions */}
-            <div className="mt-4 border-t border-slate-100 pt-4">
-              <p className="text-[11px] text-slate-muted">
-                Select your check-in date first, then select your check-out
-                date.
-              </p>
-
-              {dateSelectionError && (
-                <p className="mt-2 text-xs font-medium text-red-600">
-                  {dateSelectionError}
-                </p>
-              )}
-            </div>
-
-            {/* Booking Summary */}
-            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wide text-slate-muted">
-                    Check-in
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-slate-text">
-                    {checkIn ? formatFullDate(checkIn) : "Select a date"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] uppercase tracking-wide text-slate-muted">
-                    Check-out
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-slate-text">
-                    {checkOut ? formatFullDate(checkOut) : "Select a date"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] uppercase tracking-wide text-slate-muted">
-                    Duration
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-slate-text">
-                    {numberOfNights > 0
-                      ? `${numberOfNights} ${
-                          numberOfNights === 1 ? "night" : "nights"
-                        }`
-                      : "—"}
-                  </p>
-                </div>
-              </div>
-
-              {numberOfNights > 0 && (
-                <div className="mt-4 flex flex-col gap-4 border-t border-slate-200 pt-4 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wide text-slate-muted">
-                      Estimated total
-                    </p>
-
-                    <p className="mt-1 text-xl font-bold text-midnight-indigo">
-                      Rp {formatPrice(estimatedTotal)}
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-slate-muted">
-                      Based on the selected room and nightly prices.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={!checkIn || !checkOut || !isSelectedStayAvailable}
-                    onClick={handleContinueToBooking}
-                    className="h-[42px] cursor-pointer rounded-lg bg-sunrise-amber px-5 text-sm font-semibold text-slate-text shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Continue to Booking
-                  </button>
-                </div>
-              )}
-            </div>
-
             <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-[11px] text-slate-muted">
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -1074,6 +951,8 @@ export default function PropertyDetailPage() {
                 peak season adjustments.
               </span>
             </div>
+
+            
           </div>
         </section>
       </main>

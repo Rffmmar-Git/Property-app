@@ -2,9 +2,10 @@ import prisma from "../config/prisma";
 import {
   Prisma,
   reservations,
-  reservation_status,payment_status
+  reservation_status
 } from "../generated/prisma/client";
 import { ReservationComplete } from "../types/prisma";
+import { TenantTransactionQueryDto } from "../types/dto";
 
 export class ReservationRepository {
 //  Create reservation.
@@ -300,5 +301,141 @@ async cancelReservationWithTransaction(
     },
   });
 }
+
+async findTenantTransactions(
+  tenantId: number,
+  query: TenantTransactionQueryDto
+) {
+  const where: Prisma.reservationsWhereInput = {
+    rooms: {
+      properties: {
+        tenant_id: BigInt(tenantId),
+      },
+    },
+
+    ...(query.search
+      ? {
+          OR: [
+            {
+              booking_code: {
+                contains: query.search,
+                mode: "insensitive",
+              },
+            },
+            {
+              users: {
+                full_name: {
+                  contains: query.search,
+                  mode: "insensitive",
+                },
+              },
+            },
+          ],
+        }
+      : {}),
+
+    ...(query.reservationStatus
+      ? {
+          status: query.reservationStatus,
+        }
+      : {}),
+
+    ...(query.paymentStatus
+      ? {
+          payments: {
+            status: query.paymentStatus,
+          },
+        }
+      : {}),
+  };
+
+  const orderBy =
+    query.sortBy === "booking_code"
+      ? { booking_code: query.order ?? "desc" }
+      : query.sortBy === "total_price"
+        ? { total_price: query.order ?? "desc" }
+        : query.sortBy === "check_in"
+          ? { check_in: query.order ?? "desc" }
+          : query.sortBy === "check_out"
+            ? { check_out: query.order ?? "desc" }
+            : { created_at: query.order ?? "desc" };
+
+  const [reservations, total] =
+    await prisma.$transaction([
+      prisma.reservations.findMany({
+        where,
+
+        include: {
+          users: true,
+
+          rooms: {
+            include: {
+              properties: true,
+            },
+          },
+
+          payments: true,
+
+          reviews: true,
+        },
+
+        orderBy,
+
+        ...(query.page !== undefined &&
+        query.limit !== undefined
+          ? {
+              skip:
+                (query.page - 1) *
+                query.limit,
+              take: query.limit,
+            }
+          : {}),
+      }),
+
+      prisma.reservations.count({
+        where,
+      }),
+    ]);
+
+  return {
+    reservations,
+    total,
+  };
 }
+
+async findConfirmedReservationsForReminder(
+  startDate: Date,
+  endDate: Date
+): Promise<ReservationComplete[]> {
+  return prisma.reservations.findMany({
+    where: {
+      status: reservation_status.CONFIRMED,
+      check_in: {
+        gte: startDate,
+        lt: endDate,
+      },
+    },
+
+    include: {
+      users: true,
+
+      rooms: {
+        include: {
+          properties: true,
+        },
+      },
+
+      payments: true,
+
+      reviews: true,
+    },
+
+    orderBy: {
+      check_in: "asc",
+    },
+  });
+}
+}
+
+
 

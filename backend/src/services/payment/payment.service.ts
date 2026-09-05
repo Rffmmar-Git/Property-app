@@ -8,7 +8,9 @@ import { UploadPaymentResponseDto } from "../../types/dto/payment/upload-payment
 import { PaymentValidationService } from "./payment-validation.service";
 import { PaymentPersistenceService } from "./payment-persistence.service";
 import { PaymentMapperService } from "./payment-mapper.service";
-
+import { TenantTransactionResponseDto } from "../../types/dto/payment/tenant-transaction-response.dto";
+import { sendPaymentApprovedEmail, sendPaymentRejectedEmail } from "../../utils";
+import { TenantTransactionQueryDto } from "../../types/dto";
 export class PaymentService {
   constructor(
     private readonly validationService:
@@ -75,6 +77,24 @@ export class PaymentService {
     );
   }
 
+  async getTenantTransactions(
+  tenantId: number,
+  query: TenantTransactionQueryDto
+) {
+  const result =
+    await reservationRepository.findTenantTransactions(
+      tenantId,
+      query
+    );
+
+  return this.mapperService.buildTenantTransactionResponse(
+    result.reservations,
+    result.total,
+    query.page ?? 1,
+    query.limit ?? 10
+  );
+}
+
   async confirmPayment(
     tenantId: number,
     reservationId: number
@@ -106,6 +126,21 @@ export class PaymentService {
         reservationId
       );
 
+      await sendPaymentApprovedEmail(
+      reservation.users.email,
+      reservation.users.full_name,
+      reservation.booking_code,
+      reservation.rooms.properties.name,
+      reservation.rooms.properties.description,
+      reservation.rooms.properties.address,
+      reservation.rooms.room_name,
+      reservation.check_in,
+      reservation.check_out,
+      reservation.rooms.properties.check_in_time,
+      reservation.rooms.properties.check_out_time,
+      reservation.guest_count,
+      reservation.total_price.toString()
+    );
     return this.mapperService
       .buildConfirmPaymentResponse(
         updatedPayment
@@ -143,11 +178,20 @@ export class PaymentService {
         reservationId
       );
 
+      await sendPaymentRejectedEmail(
+      reservation.users.email,
+      reservation.users.full_name,
+      reservation.booking_code,
+      reservation.rooms.properties.name,
+      reservation.rooms.room_name
+    );
+
     return this.mapperService
       .buildRejectPaymentResponse(
         updatedPayment
       );
   }
+
 }
 
 //#region Dependencies

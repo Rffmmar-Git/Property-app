@@ -14,6 +14,14 @@ import GoogleCallbackPage from "../pages/auth/GoogleCallbackPage";
 
 import CustomerProfilePage from "../pages/profile/CustomerProfilePage";
 
+import CreateReservationPage from "@/pages/reservation/CreateReservationPage";
+import PaymentPage from "../pages/payment/PaymentPage";
+import MyReservationsPage from "@/pages/reservation/MyReservationPage";
+import ReservationDetailPage from "@/pages/reservation/ReservationDetailPage";
+import TenantTransactionPage from "@/pages/payment/TenantTransactionPage";
+import ReportPage from "@/pages/report/ReportPage";
+import { RoleRoute } from "@/routes/RoleRoute";
+import { user_role } from "@/routes/route-config";
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -39,13 +47,67 @@ export default function AppRouter() {
 
         <Route path="/register/tenant" element={<TenantRegisterPage />} />
 
-        {/* Google OAuth */}
         <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
 
-        {/* Email Verification */}
         <Route path="/check-email" element={<CheckEmailPage />} />
 
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+
+        <Route
+          path="/reservations/create/:id"
+          element={
+            <RoleRoute allowedRoles={[user_role.CUSTOMER]}>
+              <CreateReservationPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/payments/:reservationId"
+          element={
+            <RoleRoute allowedRoles={[user_role.CUSTOMER]}>
+              <PaymentPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/my-reservations"
+          element={
+            <RoleRoute allowedRoles={[user_role.CUSTOMER]}>
+              <MyReservationsPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/reservations/:id"
+          element={
+            <RoleRoute allowedRoles={[user_role.CUSTOMER]}>
+              <ReservationDetailPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/tenant/transactions"
+          element={
+            <RoleRoute allowedRoles={[user_role.TENANT]}>
+              <TenantTransactionPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/tenant/reports"
+          element={
+            <RoleRoute allowedRoles={[user_role.TENANT]}>
+              <ReportPage />
+            </RoleRoute>
+          }
+        />
+
+
       </Routes>
     </BrowserRouter>
   );

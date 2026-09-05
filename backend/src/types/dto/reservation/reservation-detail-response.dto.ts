@@ -23,5 +23,7 @@ export interface ReservationDetailResponseDto {
     reservationStatus: reservation_status;
 
     paymentStatus: payment_status | null;
+
+    paymentProof?: string | null;
   };
 }

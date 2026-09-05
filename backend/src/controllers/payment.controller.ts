@@ -15,6 +15,7 @@ import {
 } from "../validations/payment/reject-payment.validation";
 
 import { paymentService } from "../services/payment/payment.service";
+import { tenantTransactionQuerySchema } from "../validations/payment/tenant-transaction-query.validation";
 
 export class PaymentController {
   //#region User Payment
@@ -54,10 +55,69 @@ export class PaymentController {
       );
     }
   );
-
-  //#endregion
-
   //#region Tenant Payment
+
+  getTenantTransactions = asyncHandler(
+  async (req: Request, res: Response) => {
+    const tenantId =
+      Number(req.user!.id);
+
+    const query =
+      tenantTransactionQuerySchema.parse({
+        page:
+          req.query.page !== undefined
+            ? Number(req.query.page)
+            : undefined,
+
+        limit:
+          req.query.limit !== undefined
+            ? Number(req.query.limit)
+            : undefined,
+
+        search:
+          req.query.search !== undefined
+            ? String(req.query.search)
+            : undefined,
+
+        paymentStatus:
+          req.query.paymentStatus !== undefined
+            ? String(req.query.paymentStatus)
+            : undefined,
+
+        reservationStatus:
+          req.query.reservationStatus !== undefined
+            ? String(req.query.reservationStatus)
+            : undefined,
+
+        sortBy:
+          req.query.sortBy !== undefined
+            ? String(req.query.sortBy)
+            : undefined,
+
+        order:
+          req.query.order !== undefined
+            ? String(req.query.order)
+            : undefined,
+      });
+
+    const result =
+      await paymentService.getTenantTransactions(
+        tenantId,
+        query
+      );
+
+    return res.status(200).json(
+      new ApiResponse(
+        true,
+        result.message,
+        {
+          data: result.data,
+          pagination: result.pagination,
+        }
+      )
+    );
+  }
+);
 
   confirmPayment = asyncHandler(
     async (req: Request, res: Response) => {
@@ -114,6 +174,8 @@ export class PaymentController {
       );
     }
   );
+
+  
 
   //#endregion
 }

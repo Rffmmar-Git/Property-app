@@ -21,6 +21,13 @@ router.post(
 /**
  * Tenant Payment
  */
+router.get(
+  "/tenant/transactions",
+  authenticate,
+  authorize(user_role.TENANT),
+  paymentController.getTenantTransactions
+);
+
 router.patch(
   "/:id/confirm",
   authenticate,
