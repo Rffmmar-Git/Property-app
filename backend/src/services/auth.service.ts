@@ -223,6 +223,7 @@ export class AuthService {
         fullName: user.full_name,
         email: user.email,
         role: user.role,
+        profilePicture: user.profile_picture,
       },
     };
   }

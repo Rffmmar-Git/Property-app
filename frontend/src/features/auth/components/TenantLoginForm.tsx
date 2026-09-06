@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
 
 import { useTenantLogin } from "../hooks/useTenantLogin";
+
+interface ApiErrorResponse {
+  success?: boolean;
+  message?: string;
+}
 
 export function TenantLoginForm() {
   const navigate = useNavigate();
@@ -29,9 +35,13 @@ export function TenantLoginForm() {
   };
 
   const errorMessage =
-    loginMutation.error instanceof Error
-      ? loginMutation.error.message
-      : "Unable to login.";
+    loginMutation.error instanceof AxiosError
+      ? (
+          loginMutation.error.response?.data as ApiErrorResponse | undefined
+        )?.message ?? "Unable to login."
+      : loginMutation.error instanceof Error
+        ? loginMutation.error.message
+        : "Unable to login.";
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
@@ -79,11 +89,27 @@ export function TenantLoginForm() {
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? (
-            <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.8} />
+            <EyeOff
+              className="h-[18px] w-[18px]"
+              strokeWidth={1.8}
+            />
           ) : (
-            <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} />
+            <Eye
+              className="h-[18px] w-[18px]"
+              strokeWidth={1.8}
+            />
           )}
         </button>
+      </div>
+
+      {/* Forgot password */}
+      <div className="mt-3 flex justify-end">
+        <Link
+          to="/forgot-password"
+          className="cursor-pointer font-label-sm text-label-sm text-midnight-indigo hover:underline"
+        >
+          Forgot password?
+        </Link>
       </div>
 
       {/* Error message */}

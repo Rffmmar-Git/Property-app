@@ -18,6 +18,12 @@ export interface UpdateEmailPayload {
   email: string;
 }
 
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export const getProfile = async (): Promise<CustomerProfile> => {
   const response = await api.get<{
     success: boolean;
@@ -50,4 +56,35 @@ export const updateEmail = async (
   }>("/profile/email", payload);
 
   return response.data.data;
+};
+
+export const updateProfilePicture = async (
+  file: File,
+): Promise<CustomerProfile> => {
+  const formData = new FormData();
+  formData.append("profilePicture", file);
+
+  const response = await api.patch<{
+    success: boolean;
+    message: string;
+    data: CustomerProfile;
+  }>("/profile/avatar", formData);
+
+  return response.data.data;
+};
+
+export const changePassword = async (
+  payload: ChangePasswordPayload,
+): Promise<{ message: string }> => {
+  const response = await api.patch<{
+    success: boolean;
+    message: string;
+    data: {
+      message: string;
+    };
+  }>("/profile/change-password", payload);
+
+  return {
+    message: response.data.message,
+  };
 };

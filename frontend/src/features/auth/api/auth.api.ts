@@ -32,6 +32,15 @@ export interface ResendVerificationPayload {
   email: string;
 }
 
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  password: string;
+}
+
 export interface VerificationTokenValidation {
   valid: boolean;
   requiresPassword: boolean;
@@ -115,6 +124,30 @@ export const resendVerification = async (
     message: string;
     data: null;
   }>("/auth/resend-verification", payload);
+
+  return response.data;
+};
+
+export const forgotPassword = async (
+  payload: ForgotPasswordPayload,
+) => {
+  const response = await api.post<{
+    success: boolean;
+    message: string;
+    data: null;
+  }>("/auth/forgot-password", payload);
+
+  return response.data;
+};
+
+export const resetPassword = async (
+  payload: ResetPasswordPayload,
+) => {
+  const response = await api.post<{
+    success: boolean;
+    message: string;
+    data: null;
+  }>("/auth/reset-password", payload);
 
   return response.data;
 };

@@ -11,8 +11,11 @@ import TenantRegisterPage from "../pages/auth/TenantRegisterPage";
 import CheckEmailPage from "../pages/auth/CheckEmailPage";
 import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
 import GoogleCallbackPage from "../pages/auth/GoogleCallbackPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 
 import CustomerProfilePage from "../pages/profile/CustomerProfilePage";
+import UnauthorizedPage from "../pages/error/UnauthorizedPage";
 
 import CreateReservationPage from "@/pages/reservation/CreateReservationPage";
 import PaymentPage from "../pages/payment/PaymentPage";
@@ -20,8 +23,10 @@ import MyReservationsPage from "@/pages/reservation/MyReservationPage";
 import ReservationDetailPage from "@/pages/reservation/ReservationDetailPage";
 import TenantTransactionPage from "@/pages/payment/TenantTransactionPage";
 import ReportPage from "@/pages/report/ReportPage";
+import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { RoleRoute } from "@/routes/RoleRoute";
 import { user_role } from "@/routes/route-config";
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -32,26 +37,66 @@ export default function AppRouter() {
         {/* Property */}
         <Route path="/properties" element={<PropertyListingPage />} />
 
-        <Route path="/properties/:id" element={<PropertyDetailPage />} />
+        <Route
+          path="/properties/:id"
+          element={<PropertyDetailPage />}
+        />
+
+        {/* Unauthorized */}
+        <Route
+          path="/unauthorized"
+          element={<UnauthorizedPage />}
+        />
 
         {/* Customer Profile */}
-        <Route path="/profile" element={<CustomerProfilePage />} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={[user_role.CUSTOMER]}>
+                <CustomerProfilePage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Customer Auth Routes */}
         <Route path="/login" element={<LoginPage />} />
 
+        <Route
+          path="/forgot-password"
+          element={<ForgotPasswordPage />}
+        />
+
+        <Route
+          path="/reset-password"
+          element={<ResetPasswordPage />}
+        />
+
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Tenant Auth Routes */}
-        <Route path="/tenant/login" element={<TenantLoginPage />} />
+        <Route
+          path="/tenant/login"
+          element={<TenantLoginPage />}
+        />
 
-        <Route path="/register/tenant" element={<TenantRegisterPage />} />
+        <Route
+          path="/register/tenant"
+          element={<TenantRegisterPage />}
+        />
 
-        <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+        <Route
+          path="/auth/google/callback"
+          element={<GoogleCallbackPage />}
+        />
 
         <Route path="/check-email" element={<CheckEmailPage />} />
 
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route
+          path="/verify-email"
+          element={<VerifyEmailPage />}
+        />
 
         <Route
           path="/reservations/create/:id"
@@ -106,8 +151,6 @@ export default function AppRouter() {
             </RoleRoute>
           }
         />
-
-
       </Routes>
     </BrowserRouter>
   );
