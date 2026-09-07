@@ -16,6 +16,9 @@ import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 
 import CustomerProfilePage from "../pages/profile/CustomerProfilePage";
 import UnauthorizedPage from "../pages/error/UnauthorizedPage";
+import TenantDashboardPage from "../pages/tenant/TenantDashboardPage";
+import PropertyCategoryPage from "../pages/tenant/PropertyCategoryPage";
+import TenantPropertyPage from "../pages/tenant/TenantPropertyPage";
 
 import CreateReservationPage from "@/pages/reservation/CreateReservationPage";
 import PaymentPage from "../pages/payment/PaymentPage";
@@ -98,6 +101,35 @@ export default function AppRouter() {
           element={<VerifyEmailPage />}
         />
 
+        {/* Tenant Portal */}
+        <Route
+          path="/tenant/dashboard"
+          element={
+            <RoleRoute allowedRoles={[user_role.TENANT]}>
+              <TenantDashboardPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/tenant/categories"
+          element={
+            <RoleRoute allowedRoles={[user_role.TENANT]}>
+              <PropertyCategoryPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/tenant/properties"
+          element={
+            <RoleRoute allowedRoles={[user_role.TENANT]}>
+              <TenantPropertyPage />
+            </RoleRoute>
+          }
+        />
+
+        {/* Customer Reservation Routes */}
         <Route
           path="/reservations/create/:id"
           element={
@@ -134,6 +166,7 @@ export default function AppRouter() {
           }
         />
 
+        {/* Tenant Feature 2 Routes */}
         <Route
           path="/tenant/transactions"
           element={

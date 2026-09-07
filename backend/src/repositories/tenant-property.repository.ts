@@ -5,6 +5,12 @@ import {
   UpdatePropertyInput,
 } from "../validations/property";
 
+const timeToUtcDate = (time: string): Date => {
+  const [hours, minutes] = time.split(":").map(Number);
+
+  return new Date(Date.UTC(1970, 0, 1, hours, minutes, 0));
+};
+
 export class TenantPropertyRepository {
   async createProperty(
     tenantId: bigint,
@@ -22,15 +28,11 @@ export class TenantPropertyRepository {
         longitude: data.longitude,
 
         check_in_time: data.checkInTime
-          ? new Date(
-              `1970-01-01T${data.checkInTime}:00`,
-            )
+          ? timeToUtcDate(data.checkInTime)
           : undefined,
 
         check_out_time: data.checkOutTime
-          ? new Date(
-              `1970-01-01T${data.checkOutTime}:00`,
-            )
+          ? timeToUtcDate(data.checkOutTime)
           : undefined,
       },
     });
@@ -137,15 +139,11 @@ export class TenantPropertyRepository {
         }),
 
         ...(data.checkInTime !== undefined && {
-          check_in_time: new Date(
-            `1970-01-01T${data.checkInTime}:00`,
-          ),
+          check_in_time: timeToUtcDate(data.checkInTime),
         }),
 
         ...(data.checkOutTime !== undefined && {
-          check_out_time: new Date(
-            `1970-01-01T${data.checkOutTime}:00`,
-          ),
+          check_out_time: timeToUtcDate(data.checkOutTime),
         }),
 
         updated_at: new Date(),

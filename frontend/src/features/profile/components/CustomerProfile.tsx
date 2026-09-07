@@ -198,7 +198,8 @@ export default function CustomerProfile({ profile }: CustomerProfileProps) {
         return;
       }
 
-      emailChanged = trimmedEmail.toLowerCase() !== profile.email.toLowerCase();
+      emailChanged =
+        trimmedEmail.toLowerCase() !== profile.email.toLowerCase();
     }
 
     if (!nameChanged && !emailChanged) {
@@ -437,24 +438,26 @@ export default function CustomerProfile({ profile }: CustomerProfileProps) {
         {/* Profile Information */}
         <div className="min-w-0 flex-1">
           {/* Header */}
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1">
               {!editMode && (
                 <>
-                  <h2 className="text-xl font-semibold text-slate-text">
+                  <h2 className="break-words text-xl font-semibold text-slate-text">
                     {profile.fullName}
                   </h2>
 
-                  <div className="mt-1 flex items-center gap-1.5 text-sm text-slate-muted">
-                    <Mail size={14} />
-                    <span className="break-all">{profile.email}</span>
+                  <div className="mt-1 flex min-w-0 items-start gap-1.5 text-sm text-slate-muted">
+                    <Mail size={14} className="mt-0.5 shrink-0" />
+                    <span className="min-w-0 break-words">
+                      {profile.email}
+                    </span>
                   </div>
                 </>
               )}
             </div>
 
             {/* Actions / Role */}
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end">
               {!editMode && (
                 <>
                   <button
@@ -528,8 +531,10 @@ export default function CustomerProfile({ profile }: CustomerProfileProps) {
                   {isGoogleAccount ? (
                     <>
                       <div className="mt-2 flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-muted">
-                        <Mail size={15} />
-                        <span className="break-all">{profile.email}</span>
+                        <Mail size={15} className="shrink-0" />
+                        <span className="min-w-0 break-words">
+                          {profile.email}
+                        </span>
                       </div>
 
                       <p className="mt-1.5 text-[11px] text-slate-muted">
@@ -628,7 +633,9 @@ export default function CustomerProfile({ profile }: CustomerProfileProps) {
 
                     <button
                       type="button"
-                      onClick={() => setShowCurrentPassword((value) => !value)}
+                      onClick={() =>
+                        setShowCurrentPassword((value) => !value)
+                      }
                       disabled={isChangingPassword}
                       aria-label={
                         showCurrentPassword
@@ -723,7 +730,9 @@ export default function CustomerProfile({ profile }: CustomerProfileProps) {
 
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword((value) => !value)}
+                      onClick={() =>
+                        setShowConfirmPassword((value) => !value)
+                      }
                       disabled={isChangingPassword}
                       aria-label={
                         showConfirmPassword
@@ -785,13 +794,7 @@ export default function CustomerProfile({ profile }: CustomerProfileProps) {
           )}
 
           {/* Verification Status */}
-          <div
-            className={
-              editMode
-                ? "mt-5 border-t border-slate-100 pt-4"
-                : "mt-5 border-t border-slate-100 pt-4"
-            }
-          >
+          <div className="mt-5 border-t border-slate-100 pt-4">
             <div className="flex items-center gap-2">
               <CheckCircle2
                 size={16}

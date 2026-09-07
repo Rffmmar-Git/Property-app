@@ -28,7 +28,7 @@ export function TenantLoginForm() {
       },
       {
         onSuccess: () => {
-          navigate("/tenant");
+          navigate("/tenant/dashboard");
         },
       },
     );

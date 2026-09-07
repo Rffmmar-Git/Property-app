@@ -24,10 +24,14 @@ export function Header() {
       label: "Explore Properties",
       to: "/properties",
     },
-    {
-      label: "My Reservations",
-      to: "/my-reservations",
-    },
+    ...(token
+      ? [
+          {
+            label: "My Reservations",
+            to: "/my-reservations",
+          },
+        ]
+      : []),
   ];
 
   return (

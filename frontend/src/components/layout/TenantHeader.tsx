@@ -3,23 +3,33 @@ import {
   Building2,
   FileBarChart,
   Home,
+  LogOut,
   User,
   WalletCards,
 } from "lucide-react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+
+import { useAuthStore } from "../../stores/auth.store";
+
+const getInitials = (fullName: string) => {
+  const names = fullName.trim().split(/\s+/).filter(Boolean);
+
+  if (names.length === 0) {
+    return "?";
+  }
+
+  if (names.length === 1) {
+    return names[0].charAt(0).toUpperCase();
+  }
+
+  return `${names[0].charAt(0)}${names[1].charAt(0)}`.toUpperCase();
+};
 
 export function TenantHeader() {
-  const rawAuth = localStorage.getItem("property-app-auth");
-  let token = "";
+  const navigate = useNavigate();
 
-  if (rawAuth) {
-    try {
-      const parsedAuth = JSON.parse(rawAuth);
-      token = parsedAuth.state?.accessToken || "";
-    } catch (e) {
-      token = "";
-    }
-  }
+  const { user, isAuthenticated, clearAuth } = useAuthStore();
+
   const navItems = [
     {
       label: "Dashboard",
@@ -42,6 +52,11 @@ export function TenantHeader() {
       icon: FileBarChart,
     },
   ];
+
+  const handleLogout = () => {
+    clearAuth();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
@@ -84,7 +99,23 @@ export function TenantHeader() {
 
         {/* Auth Actions */}
         <div className="flex items-center gap-3">
-          {token ? (
+          {!isAuthenticated || !user ? (
+            <>
+              <Link
+                to="/login"
+                className="text-[11px] font-medium text-midnight-indigo transition-colors hover:text-blue-800"
+              >
+                Login
+              </Link>
+
+              <Link
+                to="/register"
+                className="rounded-md bg-midnight-indigo px-4 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-blue-800"
+              >
+                Register
+              </Link>
+            </>
+          ) : (
             <>
               {/* Notifications */}
               <Link
@@ -100,29 +131,40 @@ export function TenantHeader() {
               {/* Profile */}
               <Link
                 to="/profile"
-                className="flex items-center gap-2 rounded-full border border-slate-200 p-1.5 text-midnight-indigo transition-colors hover:bg-slate-100"
+                aria-label="Open profile"
                 title="Profile"
+                className="flex cursor-pointer items-center justify-center rounded-full transition-opacity hover:opacity-80"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-midnight-indigo/10">
-                  <User className="h-4 w-4" />
-                </div>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="text-[11px] font-medium text-midnight-indigo transition-colors hover:text-blue-800"
-              >
-                Login
+                {user.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt={user.fullName}
+                    className="h-8 w-8 rounded-full object-cover ring-2 ring-slate-100"
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-[11px] font-semibold text-midnight-indigo ring-2 ring-slate-100">
+                    {getInitials(user.fullName)}
+                  </div>
+                )}
               </Link>
 
-              <Link
-                to="/register"
-                className="rounded-md bg-midnight-indigo px-4 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-blue-800"
+              {/* User Name */}
+              <span
+                className="hidden max-w-[140px] truncate text-[11px] font-medium text-slate-text sm:block"
+                title={user.fullName}
               >
-                Register
-              </Link>
+                Hi, {user.fullName}
+              </span>
+
+              {/* Logout */}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-midnight-indigo transition-colors hover:text-blue-800"
+              >
+                <LogOut size={13} />
+                Logout
+              </button>
             </>
           )}
         </div>
