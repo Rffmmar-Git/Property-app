@@ -15,6 +15,8 @@ import PageHeader from "@/components/layout/PageHeader";
 import SurfaceCard from "@/components/layout/SurfaceCard";
 import TenantLayout from "@/layouts/TenantLayout";
 import PropertyLocationPicker from "@/components/property/PropertyLocationPicker";
+import PropertyImageManager from "@/features/property/components/PropertyImageManager";
+import TenantRoomManager from "@/features/property/components/TenantRoomManager";
 import { geocodeAddress } from "@/features/property/api/geocoding.api";
 import { useTenantProperties } from "@/features/property/hooks/useTenantProperties";
 import { useCreateTenantProperty } from "@/features/property/hooks/useCreateTenantProperty";
@@ -301,14 +303,16 @@ export default function TenantPropertyPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleOpenForm}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-midnight-indigo px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-800"
-          >
-            <Plus size={15} />
-            Add Property
-          </button>
+          {!showForm && (
+            <button
+              type="button"
+              onClick={handleOpenForm}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-midnight-indigo px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-800"
+            >
+              <Plus size={15} />
+              Add Property
+            </button>
+          )}
         </div>
 
         {showForm && (
@@ -570,7 +574,7 @@ export default function TenantPropertyPage() {
                       type="time"
                       value={checkInTime}
                       onChange={(event) => setCheckInTime(event.target.value)}
-                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
+                      className="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
                     />
                   </div>
 
@@ -587,7 +591,7 @@ export default function TenantPropertyPage() {
                       type="time"
                       value={checkOutTime}
                       onChange={(event) => setCheckOutTime(event.target.value)}
-                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
+                      className="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
                     />
                   </div>
 
@@ -604,6 +608,18 @@ export default function TenantPropertyPage() {
                     </div>
                   )}
                 </div>
+
+                {isEditMode && editingPropertyId && (
+                  <>
+                    <div className="border-t border-slate-200 p-5">
+                      <PropertyImageManager propertyId={editingPropertyId} />
+                    </div>
+
+                    <div className="border-t border-slate-200 p-5">
+                      <TenantRoomManager propertyId={editingPropertyId} />
+                    </div>
+                  </>
+                )}
 
                 <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-4">
                   <button
@@ -690,30 +706,32 @@ export default function TenantPropertyPage() {
                       </div>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleEditProperty(property.id)}
-                        className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-midnight-indigo transition hover:bg-slate-50"
-                      >
-                        <Pencil size={14} />
-                        Edit
-                      </button>
+                    {!showForm && (
+                      <div className="flex shrink-0 items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEditProperty(property.id)}
+                          className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-midnight-indigo transition hover:bg-slate-50"
+                        >
+                          <Pencil size={14} />
+                          Edit
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleOpenDeleteConfirmation(
-                            property.id,
-                            property.name,
-                          )
-                        }
-                        className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                      >
-                        <Trash2 size={14} />
-                        Delete
-                      </button>
-                    </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleOpenDeleteConfirmation(
+                              property.id,
+                              property.name,
+                            )
+                          }
+                          className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                        >
+                          <Trash2 size={14} />
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

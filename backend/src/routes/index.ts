@@ -4,6 +4,9 @@ import authRouter from "./auth.route";
 import googleRouter from "./google.route";
 import tenantRouter from "./tenant.route";
 import tenantPropertyRouter from "./tenant-property.route";
+import propertyImageRouter from "./property-image.route";
+import tenantRoomRouter from "./tenant-room.route";
+import tenantRoomAvailabilityRouter from "./tenant-room-availability.route";
 import propertyCategoryRouter from "./property-category.route";
 import propertyRouter from "./property.route";
 import destinationRouter from "./destination.route";
@@ -26,12 +29,17 @@ router.get("/health", (_req, res) => {
   });
 });
 
-router.get("/me", authenticate, authorize(user_role.CUSTOMER), (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: req.user,
-  });
-});
+router.get(
+  "/me",
+  authenticate,
+  authorize(user_role.CUSTOMER),
+  (req, res) => {
+    res.status(200).json({
+      success: true,
+      data: req.user,
+    });
+  },
+);
 
 router.use("/auth", authRouter);
 
@@ -42,6 +50,9 @@ router.use("/tenant", tenantRouter);
 router.use("/profile", profileRouter);
 
 router.use("/tenant/properties", tenantPropertyRouter);
+router.use("/tenant/properties", propertyImageRouter);
+router.use("/tenant/properties", tenantRoomRouter);
+router.use("/tenant/properties", tenantRoomAvailabilityRouter);
 
 router.use("/properties/categories", propertyCategoryRouter);
 

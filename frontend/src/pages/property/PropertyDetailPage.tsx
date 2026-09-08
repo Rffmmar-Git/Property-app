@@ -8,7 +8,7 @@ import {
   Share2,
   Users,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import HomeNavbar from "../../features/home/components/HomeNavbar";
@@ -95,6 +95,26 @@ export default function PropertyDetailPage() {
     isError,
     isFetching,
   } = usePropertyDetail(id ?? "", selectedRoomId);
+
+  /*
+   * Automatically select the first room once the property
+   * data has been loaded.
+   *
+   * This keeps the first room selected by default while also
+   * making selectedRoomId the source of truth for the
+   * room-specific calendar.
+   */
+  useEffect(() => {
+    if (!property || property.rooms.length === 0) {
+      return;
+    }
+
+    const firstRoomId = property.rooms[0].id;
+
+    if (!selectedRoomId) {
+      setSelectedRoomId(firstRoomId);
+    }
+  }, [property, selectedRoomId]);
 
   /*
    * The backend returns the default calendar using the lowest
