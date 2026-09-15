@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarDays, Lock, Unlock } from "lucide-react";
+import { CalendarDays, CircleX, Lock } from "lucide-react";
 
 import { useTenantRoomAvailability } from "../hooks/useTenantRoomAvailability";
 import { useCloseTenantRoomDate } from "../hooks/useCloseTenantRoomDate";
@@ -9,7 +9,10 @@ interface TenantRoomAvailabilityManagerProps {
   roomId: string;
 }
 
-const getErrorMessage = (error: unknown, fallbackMessage: string): string => {
+const getErrorMessage = (
+  error: unknown,
+  fallbackMessage: string,
+): string => {
   if (error instanceof Error && error.message.trim()) {
     return error.message;
   }
@@ -29,11 +32,13 @@ const formatDate = (value: string): string => {
 export default function TenantRoomAvailabilityManager({
   roomId,
 }: TenantRoomAvailabilityManagerProps) {
-  const [availableDate, setAvailableDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [roomsToClose, setRoomsToClose] = useState("");
   const [closureReason, setClosureReason] = useState("");
-  const [openAvailabilityId, setOpenAvailabilityId] = useState<string | null>(
-    null,
-  );
+  const [cancelAvailabilityId, setCancelAvailabilityId] = useState<
+    string | null
+  >(null);
 
   const {
     data: closedDates = [],
@@ -42,12 +47,27 @@ export default function TenantRoomAvailabilityManager({
   } = useTenantRoomAvailability(roomId);
 
   const closeDateMutation = useCloseTenantRoomDate();
-  const openDateMutation = useOpenTenantRoomDate();
+  const cancelClosureMutation = useOpenTenantRoomDate();
 
-  const handleCloseDate = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCloseDate = (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
 
-    if (!availableDate) {
+    if (!startDate || !endDate || !roomsToClose) {
+      return;
+    }
+
+    const parsedRoomsToClose = Number(roomsToClose);
+
+    if (
+      !Number.isInteger(parsedRoomsToClose) ||
+      parsedRoomsToClose <= 0
+    ) {
+      return;
+    }
+
+    if (endDate < startDate) {
       return;
     }
 
@@ -55,7 +75,9 @@ export default function TenantRoomAvailabilityManager({
       {
         roomId,
         payload: {
-          availableDate,
+          startDate,
+          endDate,
+          roomsToClose: parsedRoomsToClose,
           ...(closureReason.trim()
             ? { closureReason: closureReason.trim() }
             : {}),
@@ -63,37 +85,39 @@ export default function TenantRoomAvailabilityManager({
       },
       {
         onSuccess: () => {
-          setAvailableDate("");
+          setStartDate("");
+          setEndDate("");
+          setRoomsToClose("");
           setClosureReason("");
         },
       },
     );
   };
 
-  const handleOpenDate = () => {
-    if (!openAvailabilityId) {
+  const handleCancelClosure = () => {
+    if (!cancelAvailabilityId) {
       return;
     }
 
-    openDateMutation.mutate(
+    cancelClosureMutation.mutate(
       {
         roomId,
-        availabilityId: openAvailabilityId,
+        availabilityId: cancelAvailabilityId,
       },
       {
         onSuccess: () => {
-          setOpenAvailabilityId(null);
+          setCancelAvailabilityId(null);
         },
       },
     );
   };
 
   const isClosing = closeDateMutation.isPending;
-  const isOpening = openDateMutation.isPending;
+  const isCancelling = cancelClosureMutation.isPending;
 
   return (
     <div className="space-y-6">
-      {/* Close Date Form */}
+      {/* Close Room Availability Form */}
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
         <div className="mb-4 flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700 shadow-sm ring-1 ring-slate-200">
@@ -102,31 +126,87 @@ export default function TenantRoomAvailabilityManager({
 
           <div>
             <h3 className="text-sm font-semibold text-slate-900">
-              Close a Date
+              Close Room Availability
             </h3>
+
             <p className="mt-1 text-xs text-slate-500">
-              Select a date when this room should not be available for rent.
+              Select a date range and the number of rooms to close.
             </p>
           </div>
         </div>
 
         <form onSubmit={handleCloseDate} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="start-date"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                Start Date
+              </label>
+
+              <input
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(event) => {
+                  setStartDate(event.target.value);
+
+                  if (
+                    endDate &&
+                    event.target.value > endDate
+                  ) {
+                    setEndDate(event.target.value);
+                  }
+                }}
+                disabled={isClosing}
+                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="end-date"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                End Date
+              </label>
+
+              <input
+                id="end-date"
+                type="date"
+                min={startDate || undefined}
+                value={endDate}
+                onChange={(event) => setEndDate(event.target.value)}
+                disabled={isClosing}
+                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+            </div>
+          </div>
+
           <div>
             <label
-              htmlFor="available-date"
+              htmlFor="rooms-to-close"
               className="mb-1.5 block text-sm font-medium text-slate-700"
             >
-              Date
+              Rooms to Close
             </label>
 
             <input
-              id="available-date"
-              type="date"
-              value={availableDate}
-              onChange={(event) => setAvailableDate(event.target.value)}
-              className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              id="rooms-to-close"
+              type="number"
+              min={1}
+              step={1}
+              value={roomsToClose}
+              onChange={(event) => setRoomsToClose(event.target.value)}
+              placeholder="e.g. 2"
               disabled={isClosing}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
+
+            <p className="mt-1 text-xs text-slate-500">
+              Enter the number of rooms to close on each selected date.
+            </p>
           </div>
 
           <div>
@@ -147,8 +227,8 @@ export default function TenantRoomAvailabilityManager({
               onChange={(event) => setClosureReason(event.target.value)}
               placeholder="e.g. Room maintenance"
               maxLength={255}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               disabled={isClosing}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
           </div>
 
@@ -156,44 +236,53 @@ export default function TenantRoomAvailabilityManager({
             <p className="text-sm text-red-600">
               {getErrorMessage(
                 closeDateMutation.error,
-                "Failed to close this date. Please try again.",
+                "Failed to close room availability. Please try again.",
               )}
             </p>
           )}
 
           <button
             type="submit"
-            disabled={!availableDate || isClosing}
+            disabled={
+              !startDate ||
+              !endDate ||
+              !roomsToClose ||
+              Number(roomsToClose) <= 0 ||
+              endDate < startDate ||
+              isClosing
+            }
             className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Lock className="h-4 w-4" />
-            {isClosing ? "Closing Date..." : "Close Date"}
+            {isClosing ? "Closing Rooms..." : "Close Rooms"}
           </button>
         </form>
       </div>
 
-      {/* Closed Dates */}
+      {/* Room Availability Records */}
       <div>
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-sm font-semibold text-slate-900">
-              Closed Dates
+              Room Availability
             </h3>
+
             <p className="mt-1 text-xs text-slate-500">
-              Dates currently unavailable for this room.
+              Dates with manually reduced room availability.
             </p>
           </div>
 
           {closedDates.length > 0 && (
             <span className="w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-              {closedDates.length} {closedDates.length === 1 ? "date" : "dates"}
+              {closedDates.length}{" "}
+              {closedDates.length === 1 ? "date" : "dates"}
             </span>
           )}
         </div>
 
         {isLoading && (
           <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-            Loading closed dates...
+            Loading room availability...
           </div>
         )}
 
@@ -208,7 +297,7 @@ export default function TenantRoomAvailabilityManager({
             <CalendarDays className="mx-auto h-8 w-8 text-slate-300" />
 
             <p className="mt-2 text-sm font-medium text-slate-700">
-              No closed dates
+              No availability adjustments
             </p>
 
             <p className="mt-1 text-xs text-slate-500">
@@ -235,10 +324,23 @@ export default function TenantRoomAvailabilityManager({
                         {formatDate(item.available_date)}
                       </p>
 
-                      <span className="rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-medium text-red-600">
-                        Unavailable
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          item.is_closed
+                            ? "bg-red-50 text-red-600"
+                            : "bg-amber-50 text-amber-600"
+                        }`}
+                      >
+                        {item.is_closed
+                          ? "Fully Unavailable"
+                          : "Partially Unavailable"}
                       </span>
                     </div>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      {item.available_rooms} room
+                      {item.available_rooms === 1 ? "" : "s"} available
+                    </p>
 
                     {item.closure_reason && (
                       <p className="mt-1 break-words text-xs text-slate-500">
@@ -250,12 +352,12 @@ export default function TenantRoomAvailabilityManager({
 
                 <button
                   type="button"
-                  onClick={() => setOpenAvailabilityId(item.id)}
-                  disabled={isOpening}
+                  onClick={() => setCancelAvailabilityId(item.id)}
+                  disabled={isCancelling}
                   className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:shrink-0"
                 >
-                  <Unlock className="h-4 w-4" />
-                  Open Date
+                  <CircleX className="h-4 w-4" />
+                  Cancel Closure
                 </button>
               </div>
             ))}
@@ -263,32 +365,33 @@ export default function TenantRoomAvailabilityManager({
         )}
       </div>
 
-      {/* Open Date Confirmation Modal */}
-      {openAvailabilityId && (
+      {/* Cancel Closure Confirmation Modal */}
+      {cancelAvailabilityId && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/20 p-4">
           <div className="w-[28rem] max-w-[calc(100vw-2rem)] rounded-xl bg-white p-6 shadow-xl">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-                <Unlock className="h-5 w-5" />
+                <CircleX className="h-5 w-5" />
               </div>
 
               <div className="min-w-0">
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Open this date?
+                  Cancel this closure?
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  This date will become available for this room again. Are you
-                  sure you want to continue?
+                  This will cancel the room closure for this date and make
+                  all rooms available again. Are you sure you want to
+                  continue?
                 </p>
               </div>
             </div>
 
-            {openDateMutation.isError && (
+            {cancelClosureMutation.isError && (
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-600">
                 {getErrorMessage(
-                  openDateMutation.error,
-                  "Failed to open this date. Please try again.",
+                  cancelClosureMutation.error,
+                  "Failed to cancel this closure. Please try again.",
                 )}
               </div>
             )}
@@ -296,20 +399,20 @@ export default function TenantRoomAvailabilityManager({
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setOpenAvailabilityId(null)}
-                disabled={isOpening}
+                onClick={() => setCancelAvailabilityId(null)}
+                disabled={isCancelling}
                 className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Cancel
+                Keep Closure
               </button>
 
               <button
                 type="button"
-                onClick={handleOpenDate}
-                disabled={isOpening}
+                onClick={handleCancelClosure}
+                disabled={isCancelling}
                 className="cursor-pointer rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isOpening ? "Opening Date..." : "Open Date"}
+                {isCancelling ? "Cancelling..." : "Cancel Closure"}
               </button>
             </div>
           </div>

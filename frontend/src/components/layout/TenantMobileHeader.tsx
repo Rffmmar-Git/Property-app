@@ -1,8 +1,4 @@
-import {
-  Bell,
-  Building2,
-  User,
-} from "lucide-react";
+import { Bell, Building2, User } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function TenantMobileHeader() {
@@ -13,10 +9,7 @@ export function TenantMobileHeader() {
           to="/tenant/dashboard"
           className="flex items-center gap-2 text-midnight-indigo"
         >
-          <Building2
-            size={19}
-            strokeWidth={2.5}
-          />
+          <Building2 size={19} strokeWidth={2.5} />
 
           <span className="font-headline-md text-[16px] font-bold">
             Property App
@@ -35,7 +28,7 @@ export function TenantMobileHeader() {
           </Link>
 
           <Link
-            to="/profile"
+            to="/tenant/profile"
             className="rounded-full p-2 text-midnight-indigo transition-colors hover:bg-slate-100"
             title="Profile"
           >

@@ -41,6 +41,7 @@ export class TenantService {
       email: user.email,
       role: user.role,
       isVerified: user.is_verified,
+      profilePicture: user.profile_picture,
     };
   }
 
@@ -76,6 +77,7 @@ export class TenantService {
         fullName: user.full_name,
         email: user.email,
         role: user.role,
+        profilePicture: user.profile_picture,
       },
     };
   }
@@ -93,6 +95,7 @@ export class TenantService {
       email: tenant.users.email,
       role: tenant.users.role,
       isVerified: tenant.users.is_verified,
+      profilePicture: tenant.users.profile_picture,
       companyName: tenant.company_name,
       identityNumber: tenant.identity_number,
       taxNumber: tenant.tax_number,
@@ -103,7 +106,10 @@ export class TenantService {
     };
   }
 
-  async updateProfile(userId: string, data: UpdateTenantProfileInput) {
+  async updateProfile(
+    userId: string,
+    data: UpdateTenantProfileInput,
+  ) {
     const tenant = await tenantRepository.findTenantByUserId(BigInt(userId));
 
     if (!tenant) {
@@ -121,6 +127,7 @@ export class TenantService {
       email: updatedTenant.users.email,
       role: updatedTenant.users.role,
       isVerified: updatedTenant.users.is_verified,
+      profilePicture: updatedTenant.users.profile_picture,
       companyName: updatedTenant.company_name,
       identityNumber: updatedTenant.identity_number,
       taxNumber: updatedTenant.tax_number,
@@ -131,7 +138,10 @@ export class TenantService {
     };
   }
 
-  async updateIdentityDocument(userId: string, file: Express.Multer.File) {
+  async updateIdentityDocument(
+    userId: string,
+    file: Express.Multer.File,
+  ) {
     const tenant = await tenantRepository.findTenantByUserId(BigInt(userId));
 
     if (!tenant) {
@@ -167,6 +177,7 @@ export class TenantService {
       email: updatedTenant.users.email,
       role: updatedTenant.users.role,
       isVerified: updatedTenant.users.is_verified,
+      profilePicture: updatedTenant.users.profile_picture,
       companyName: updatedTenant.company_name,
       identityNumber: updatedTenant.identity_number,
       taxNumber: updatedTenant.tax_number,

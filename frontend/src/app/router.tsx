@@ -15,7 +15,10 @@ import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 
 import CustomerProfilePage from "../pages/profile/CustomerProfilePage";
+import TenantProfilePage from "../pages/profile/TenantProfilePage";
+
 import UnauthorizedPage from "../pages/error/UnauthorizedPage";
+
 import TenantDashboardPage from "../pages/tenant/TenantDashboardPage";
 import PropertyCategoryPage from "../pages/tenant/PropertyCategoryPage";
 import TenantPropertyPage from "../pages/tenant/TenantPropertyPage";
@@ -24,8 +27,10 @@ import CreateReservationPage from "@/pages/reservation/CreateReservationPage";
 import PaymentPage from "../pages/payment/PaymentPage";
 import MyReservationsPage from "@/pages/reservation/MyReservationPage";
 import ReservationDetailPage from "@/pages/reservation/ReservationDetailPage";
+
 import TenantTransactionPage from "@/pages/payment/TenantTransactionPage";
 import ReportPage from "@/pages/report/ReportPage";
+
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { RoleRoute } from "@/routes/RoleRoute";
 import { user_role } from "@/routes/route-config";
@@ -58,6 +63,18 @@ export default function AppRouter() {
             <ProtectedRoute>
               <RoleRoute allowedRoles={[user_role.CUSTOMER]}>
                 <CustomerProfilePage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Tenant Profile */}
+        <Route
+          path="/tenant/profile"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={[user_role.TENANT]}>
+                <TenantProfilePage />
               </RoleRoute>
             </ProtectedRoute>
           }

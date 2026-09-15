@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 
 import { tenantRoomAvailabilityService } from "../services/tenant-room-availability.service";
 
-import { CreateRoomAvailabilityInput } from "../validations/room";
+import { CreateRoomAvailabilityInput } from "../validations/room/room-availability.validation";
 
 import {
   ApiResponse,
@@ -32,7 +32,7 @@ export class TenantRoomAvailabilityController {
       return res.status(201).json(
         new ApiResponse(
           true,
-          "Room date closed successfully",
+          "Room dates closed successfully",
           serializeBigInt(availability),
         ),
       );
@@ -56,7 +56,7 @@ export class TenantRoomAvailabilityController {
       return res.status(200).json(
         new ApiResponse(
           true,
-          "Room closed dates retrieved successfully",
+          "Room availability dates retrieved successfully",
           serializeBigInt(dates),
         ),
       );
@@ -80,7 +80,7 @@ export class TenantRoomAvailabilityController {
       return res.status(200).json(
         new ApiResponse(
           true,
-          "Room date opened successfully",
+          "Room availability date opened successfully",
           null,
         ),
       );

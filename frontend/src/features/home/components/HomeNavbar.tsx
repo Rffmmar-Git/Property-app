@@ -23,6 +23,8 @@ export default function HomeNavbar() {
 
   const { user, isAuthenticated, clearAuth } = useAuthStore();
 
+  const homePath = user?.role === "TENANT" ? "/tenant/dashboard" : "/";
+
   const navItems = [
     {
       label: "Home",
@@ -42,6 +44,9 @@ export default function HomeNavbar() {
       : []),
   ];
 
+  const profilePath =
+    user?.role === "TENANT" ? "/tenant/profile" : "/profile";
+
   const handleLogout = () => {
     clearAuth();
     navigate("/");
@@ -53,7 +58,7 @@ export default function HomeNavbar() {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
           {/* Brand */}
           <Link
-            to="/"
+            to={homePath}
             className="flex items-center gap-2 text-midnight-indigo"
           >
             <Building2 size={19} strokeWidth={2.5} />
@@ -104,7 +109,7 @@ export default function HomeNavbar() {
               <>
                 {/* Profile Avatar */}
                 <Link
-                  to="/profile"
+                  to={profilePath}
                   aria-label="Open profile"
                   title="Profile"
                   className="flex cursor-pointer items-center justify-center rounded-full transition-opacity hover:opacity-80"

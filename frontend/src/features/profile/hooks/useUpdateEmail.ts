@@ -13,7 +13,7 @@ export const useUpdateEmail = () => {
   return useMutation({
     mutationFn: updateEmail,
 
-    onSuccess: (updatedProfile) => {
+    onSuccess: async (updatedProfile) => {
       queryClient.setQueryData(["customer-profile"], updatedProfile);
 
       if (accessToken && user) {
@@ -26,6 +26,10 @@ export const useUpdateEmail = () => {
             updatedProfile.profilePicture ?? user.profilePicture,
         });
       }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["tenant-profile"],
+      });
     },
   });
 };

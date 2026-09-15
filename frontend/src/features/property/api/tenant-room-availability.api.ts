@@ -18,7 +18,9 @@ interface ApiResponse<T> {
 }
 
 export interface CreateTenantRoomAvailabilityPayload {
-  availableDate: string;
+  startDate: string;
+  endDate: string;
+  roomsToClose: number;
   closureReason?: string;
 }
 
@@ -35,9 +37,9 @@ export const getTenantRoomClosedDates = async (
 export const closeTenantRoomDate = async (
   roomId: string,
   payload: CreateTenantRoomAvailabilityPayload,
-): Promise<TenantRoomAvailability> => {
+): Promise<TenantRoomAvailability[]> => {
   const response = await api.post<
-    ApiResponse<TenantRoomAvailability>
+    ApiResponse<TenantRoomAvailability[]>
   >(
     `/tenant/properties/rooms/${roomId}/availability`,
     payload,

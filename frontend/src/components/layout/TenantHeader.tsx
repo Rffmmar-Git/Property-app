@@ -4,7 +4,6 @@ import {
   FileBarChart,
   Home,
   LogOut,
-  User,
   WalletCards,
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
@@ -130,8 +129,8 @@ export function TenantHeader() {
 
               {/* Profile */}
               <Link
-                to="/profile"
-                aria-label="Open profile"
+                to="/tenant/profile"
+                aria-label="Open tenant profile"
                 title="Profile"
                 className="flex cursor-pointer items-center justify-center rounded-full transition-opacity hover:opacity-80"
               >

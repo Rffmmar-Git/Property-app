@@ -4,14 +4,16 @@ export class TenantRoomAvailabilityRepository {
   async create(
     roomId: bigint,
     availableDate: Date,
+    availableRooms: number,
+    isClosed: boolean,
     closureReason?: string,
   ) {
     return prisma.room_availabilities.create({
       data: {
         room_id: roomId,
         available_date: availableDate,
-        available_rooms: 0,
-        is_closed: true,
+        available_rooms: availableRooms,
+        is_closed: isClosed,
         closure_reason: closureReason,
       },
     });
@@ -31,11 +33,40 @@ export class TenantRoomAvailabilityRepository {
     });
   }
 
+  async upsert(
+    roomId: bigint,
+    availableDate: Date,
+    availableRooms: number,
+    isClosed: boolean,
+    closureReason?: string,
+  ) {
+    return prisma.room_availabilities.upsert({
+      where: {
+        room_id_available_date: {
+          room_id: roomId,
+          available_date: availableDate,
+        },
+      },
+      create: {
+        room_id: roomId,
+        available_date: availableDate,
+        available_rooms: availableRooms,
+        is_closed: isClosed,
+        closure_reason: closureReason,
+      },
+      update: {
+        available_rooms: availableRooms,
+        is_closed: isClosed,
+        closure_reason: closureReason,
+        updated_at: new Date(),
+      },
+    });
+  }
+
   async findManyByRoom(roomId: bigint) {
     return prisma.room_availabilities.findMany({
       where: {
         room_id: roomId,
-        is_closed: true,
       },
       orderBy: {
         available_date: "asc",

@@ -13,9 +13,7 @@ export const useUpdateProfilePicture = () => {
   return useMutation({
     mutationFn: updateProfilePicture,
 
-    onSuccess: (updatedProfile) => {
-      queryClient.setQueryData(["customer-profile"], updatedProfile);
-
+    onSuccess: async (updatedProfile) => {
       if (accessToken && user) {
         setAuth(accessToken, {
           ...user,
@@ -25,6 +23,14 @@ export const useUpdateProfilePicture = () => {
           profilePicture: updatedProfile.profilePicture,
         });
       }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["tenant-profile"],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: ["customer-profile"],
+      });
     },
   });
 };

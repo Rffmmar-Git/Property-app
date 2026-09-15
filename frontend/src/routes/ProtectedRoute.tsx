@@ -8,10 +8,18 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+}: ProtectedRouteProps) {
   const isAuthenticated = useAuthStore(
     (state) => state.isAuthenticated,
   );
+
+  const hasHydrated = useAuthStore((state) => state._hasHydrated);
+
+  if (!hasHydrated) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to={ROUTES.LOGIN} replace />;

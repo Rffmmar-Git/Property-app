@@ -87,6 +87,33 @@ export class TenantRoomRepository {
     });
   }
 
+  async countActiveReservationsByDate(
+    roomId: bigint,
+    date: Date,
+  ) {
+    return prisma.reservations.count({
+      where: {
+        room_id: roomId,
+
+        check_in: {
+          lte: date,
+        },
+
+        check_out: {
+          gt: date,
+        },
+
+        status: {
+          in: [
+            "WAITING_PAYMENT",
+            "WAITING_CONFIRMATION",
+            "CONFIRMED",
+          ],
+        },
+      },
+    });
+  }
+
   async updateRoom(
     roomId: bigint,
     data: {

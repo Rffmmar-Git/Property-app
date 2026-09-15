@@ -1,16 +1,20 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import type {
-  AuthState,
-} from "../types/auth";
+import type { AuthState } from "../types/auth";
 
-export const useAuthStore = create<AuthState>()(
+interface AuthStoreState extends AuthState {
+  _hasHydrated: boolean;
+  setHasHydrated: (hasHydrated: boolean) => void;
+}
+
+export const useAuthStore = create<AuthStoreState>()(
   persist(
     (set) => ({
       accessToken: null,
       user: null,
       isAuthenticated: false,
+      _hasHydrated: false,
 
       setAuth: (accessToken, user) => {
         set({
@@ -27,9 +31,21 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         });
       },
+
+      setHasHydrated: (hasHydrated) => {
+        set({
+          _hasHydrated: hasHydrated,
+        });
+      },
     }),
     {
       name: "property-app-auth",
+
+      onRehydrateStorage: () => {
+        return (state) => {
+          state?.setHasHydrated(true);
+        };
+      },
     },
   ),
 );

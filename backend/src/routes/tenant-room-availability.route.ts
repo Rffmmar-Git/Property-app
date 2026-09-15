@@ -10,7 +10,7 @@ import validate from "../middlewares/validation.middleware";
 
 import {
   createRoomAvailabilitySchema,
-} from "../validations/room";
+} from "../validations/room/room-availability.validation";
 
 import { user_role } from "../generated/prisma/enums";
 

@@ -5,6 +5,7 @@ import { tenantRoomController } from "../controllers/tenant-room.controller";
 
 import { authenticate } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
+import { uploadIdentityDocument } from "../middlewares/upload.middleware";
 import validate from "../middlewares/validation.middleware";
 
 import { createRoomSchema, updateRoomSchema } from "../validations/room";
@@ -13,32 +14,26 @@ import { user_role } from "../generated/prisma/enums";
 
 const router = Router();
 
-/**
- * Tenant Authentication
- * These routes must remain public.
- */
+// Tenant Authentication
 router.post("/register", tenantController.register);
 
 router.post("/login", tenantController.login);
 
-/**
- * Tenant Management
- * All routes below require:
- * - valid authentication
- * - TENANT role
- */
+// Tenant Management
 router.use(authenticate, authorize(user_role.TENANT));
 
-/**
- * Tenant Profile
- */
+// Tenant Profile
 router.get("/me", tenantController.getProfile);
 
 router.patch("/me", tenantController.updateProfile);
 
-/**
- * Tenant Room Management
- */
+router.post(
+  "/me/identity-document",
+  uploadIdentityDocument,
+  tenantController.updateIdentityDocument,
+);
+
+// Tenant Room Management
 router.post(
   "/:propertyId/rooms",
   validate(createRoomSchema),

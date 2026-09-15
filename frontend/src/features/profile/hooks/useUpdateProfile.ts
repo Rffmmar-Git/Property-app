@@ -7,15 +7,13 @@ export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
 
   const accessToken = useAuthStore((state) => state.accessToken);
-
   const user = useAuthStore((state) => state.user);
-
   const setAuth = useAuthStore((state) => state.setAuth);
 
   return useMutation({
     mutationFn: updateProfile,
 
-    onSuccess: (updatedProfile) => {
+    onSuccess: async (updatedProfile) => {
       queryClient.setQueryData(["customer-profile"], updatedProfile);
 
       if (accessToken && user) {
@@ -24,9 +22,14 @@ export const useUpdateProfile = () => {
           fullName: updatedProfile.fullName,
           email: updatedProfile.email,
           role: updatedProfile.role,
-          profilePicture: updatedProfile.profilePicture ?? user.profilePicture,
+          profilePicture:
+            updatedProfile.profilePicture ?? user.profilePicture,
         });
       }
+
+      await queryClient.invalidateQueries({
+        queryKey: ["tenant-profile"],
+      });
     },
   });
 };
