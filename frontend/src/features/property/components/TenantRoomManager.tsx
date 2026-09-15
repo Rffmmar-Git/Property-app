@@ -4,15 +4,15 @@ import {
   CalendarDays,
   CircleAlert,
   Plus,
+  ArrowLeft,
 } from "lucide-react";
-import {
-  type CreateTenantRoomPayload,
-} from "../api/tenant-room.api";
+import { type CreateTenantRoomPayload } from "../api/tenant-room.api";
 import { useTenantRooms } from "../hooks/useTenantRooms";
 import { useCreateTenantRoom } from "../hooks/useCreateTenantRoom";
 import { useUpdateTenantRoom } from "../hooks/useUpdateTenantRoom";
 import { useDeleteTenantRoom } from "../hooks/useDeleteTenantRoom";
 import TenantRoomAvailabilityManager from "./TenantRoomAvailabilityManager";
+import TenantPeakSeasonManager from "./TenantPeakSeasonManager";
 
 interface TenantRoomManagerProps {
   propertyId: string;
@@ -27,6 +27,11 @@ interface RoomFormState {
 }
 
 interface AvailabilityRoomState {
+  id: string;
+  name: string;
+}
+
+interface PeakSeasonRoomState {
   id: string;
   name: string;
 }
@@ -53,10 +58,7 @@ const parsePrice = (value: string): number => {
   return Number(value.replace(/,/g, ""));
 };
 
-const getErrorMessage = (
-  error: unknown,
-  fallbackMessage: string,
-): string => {
+const getErrorMessage = (error: unknown, fallbackMessage: string): string => {
   if (error instanceof Error && error.message.trim()) {
     return error.message;
   }
@@ -68,38 +70,29 @@ export default function TenantRoomManager({
   propertyId,
 }: TenantRoomManagerProps) {
   const [showForm, setShowForm] = useState(false);
-  const [editingRoomId, setEditingRoomId] = useState<string | null>(
-    null,
-  );
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
   const [deletingRoom, setDeletingRoom] = useState<{
     id: string;
     name: string;
   } | null>(null);
   const [availabilityRoom, setAvailabilityRoom] =
     useState<AvailabilityRoomState | null>(null);
+  const [peakSeasonRoom, setPeakSeasonRoom] =
+    useState<PeakSeasonRoomState | null>(null);
 
-  const [form, setForm] = useState<RoomFormState>(
-    initialFormState,
-  );
+  const [form, setForm] = useState<RoomFormState>(initialFormState);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const {
-    data: rooms = [],
-    isLoading,
-    isError,
-  } = useTenantRooms();
+  const { data: rooms = [], isLoading, isError } = useTenantRooms();
 
   const createMutation = useCreateTenantRoom();
   const updateMutation = useUpdateTenantRoom();
   const deleteMutation = useDeleteTenantRoom();
 
-  const propertyRooms = rooms.filter(
-    (room) => room.property_id === propertyId,
-  );
+  const propertyRooms = rooms.filter((room) => room.property_id === propertyId);
 
   const isEditMode = Boolean(editingRoomId);
-  const isSubmitting =
-    createMutation.isPending || updateMutation.isPending;
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const resetForm = () => {
     setForm(initialFormState);
@@ -129,10 +122,7 @@ export default function TenantRoomManager({
     setShowForm(true);
   };
 
-  const handleOpenAvailability = (
-    roomId: string,
-    roomName: string,
-  ) => {
+  const handleOpenAvailability = (roomId: string, roomName: string) => {
     setErrorMessage("");
     setAvailabilityRoom({
       id: roomId,
@@ -145,10 +135,20 @@ export default function TenantRoomManager({
     setErrorMessage("");
   };
 
-  const handleInputChange = (
-    field: keyof RoomFormState,
-    value: string,
-  ) => {
+  const handleOpenPeakSeason = (roomId: string, roomName: string) => {
+    setErrorMessage("");
+    setPeakSeasonRoom({
+      id: roomId,
+      name: roomName,
+    });
+  };
+
+  const handleClosePeakSeason = () => {
+    setPeakSeasonRoom(null);
+    setErrorMessage("");
+  };
+
+  const handleInputChange = (field: keyof RoomFormState, value: string) => {
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -175,27 +175,15 @@ export default function TenantRoomManager({
     const basePrice = parsePrice(form.basePrice);
     const totalRooms = Number(form.totalRooms);
 
-    if (
-      !form.capacity ||
-      !Number.isInteger(capacity) ||
-      capacity <= 0
-    ) {
+    if (!form.capacity || !Number.isInteger(capacity) || capacity <= 0) {
       return "Capacity must be a whole number greater than 0.";
     }
 
-    if (
-      !form.basePrice ||
-      !Number.isFinite(basePrice) ||
-      basePrice <= 0
-    ) {
+    if (!form.basePrice || !Number.isFinite(basePrice) || basePrice <= 0) {
       return "Base price must be greater than 0.";
     }
 
-    if (
-      !form.totalRooms ||
-      !Number.isInteger(totalRooms) ||
-      totalRooms <= 0
-    ) {
+    if (!form.totalRooms || !Number.isInteger(totalRooms) || totalRooms <= 0) {
       return "Total rooms must be a whole number greater than 0.";
     }
 
@@ -246,10 +234,7 @@ export default function TenantRoomManager({
     }
   };
 
-  const handleOpenDelete = (
-    roomId: string,
-    roomName: string,
-  ) => {
+  const handleOpenDelete = (roomId: string, roomName: string) => {
     setErrorMessage("");
     setDeletingRoom({
       id: roomId,
@@ -278,43 +263,44 @@ export default function TenantRoomManager({
       setDeletingRoom(null);
     } catch (error) {
       setErrorMessage(
-        getErrorMessage(
-          error,
-          "Unable to delete this room. Please try again.",
-        ),
+        getErrorMessage(error, "Unable to delete this room. Please try again."),
       );
     }
   };
 
   if (availabilityRoom) {
     return (
-      <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center gap-3 border-b border-slate-200 p-5">
-          <button
-            type="button"
-            onClick={handleCloseAvailability}
-            className="cursor-pointer rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-          >
-            Back to Rooms
-          </button>
+      <section className="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <button
+              type="button"
+              onClick={() => setAvailabilityRoom(null)}
+              className="mb-2 cursor-pointer text-sm font-medium text-gray-500 hover:text-gray-900"
+            >
+              ← Back to Rooms
+            </button>
 
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-xl font-bold text-gray-900">
               Room Availability
             </h2>
 
-            <p className="mt-1 truncate text-sm text-slate-500">
-              {availabilityRoom.name}
-            </p>
+            <p className="text-sm text-gray-500">{availabilityRoom.name}</p>
           </div>
         </div>
 
-        <div className="p-5">
-          <TenantRoomAvailabilityManager
-            roomId={availabilityRoom.id}
-          />
-        </div>
+        <TenantRoomAvailabilityManager roomId={availabilityRoom.id} />
       </section>
+    );
+  }
+
+  if (peakSeasonRoom) {
+    return (
+      <TenantPeakSeasonManager
+        roomId={peakSeasonRoom.id}
+        roomName={peakSeasonRoom.name}
+        onBack={handleClosePeakSeason}
+      />
     );
   }
 
@@ -323,9 +309,7 @@ export default function TenantRoomManager({
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between gap-4 border-b border-slate-200 p-5">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              Rooms
-            </h2>
+            <h2 className="text-lg font-semibold text-slate-900">Rooms</h2>
 
             <p className="mt-1 text-sm text-slate-500">
               Manage the room types available in this property.
@@ -366,10 +350,7 @@ export default function TenantRoomManager({
                   type="text"
                   value={form.roomName}
                   onChange={(event) =>
-                    handleInputChange(
-                      "roomName",
-                      event.target.value,
-                    )
+                    handleInputChange("roomName", event.target.value)
                   }
                   placeholder="e.g. Deluxe Room"
                   disabled={isSubmitting}
@@ -388,10 +369,7 @@ export default function TenantRoomManager({
                   step="1"
                   value={form.capacity}
                   onChange={(event) =>
-                    handleInputChange(
-                      "capacity",
-                      event.target.value,
-                    )
+                    handleInputChange("capacity", event.target.value)
                   }
                   placeholder="e.g. 2"
                   disabled={isSubmitting}
@@ -408,9 +386,7 @@ export default function TenantRoomManager({
                   type="text"
                   inputMode="numeric"
                   value={form.basePrice}
-                  onChange={(event) =>
-                    handlePriceChange(event.target.value)
-                  }
+                  onChange={(event) => handlePriceChange(event.target.value)}
                   placeholder="e.g. 750,000"
                   disabled={isSubmitting}
                   className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-slate-400 disabled:cursor-not-allowed disabled:bg-slate-50"
@@ -428,10 +404,7 @@ export default function TenantRoomManager({
                   step="1"
                   value={form.totalRooms}
                   onChange={(event) =>
-                    handleInputChange(
-                      "totalRooms",
-                      event.target.value,
-                    )
+                    handleInputChange("totalRooms", event.target.value)
                   }
                   placeholder="e.g. 10"
                   disabled={isSubmitting}
@@ -447,10 +420,7 @@ export default function TenantRoomManager({
                 <textarea
                   value={form.description}
                   onChange={(event) =>
-                    handleInputChange(
-                      "description",
-                      event.target.value,
-                    )
+                    handleInputChange("description", event.target.value)
                   }
                   placeholder="Describe this room type..."
                   rows={4}
@@ -472,9 +442,7 @@ export default function TenantRoomManager({
                     Unable to save room
                   </p>
 
-                  <p className="mt-0.5 text-sm text-red-600">
-                    {errorMessage}
-                  </p>
+                  <p className="mt-0.5 text-sm text-red-600">{errorMessage}</p>
                 </div>
               </div>
             )}
@@ -507,17 +475,14 @@ export default function TenantRoomManager({
 
         {isLoading && (
           <div className="p-5">
-            <p className="text-sm text-slate-500">
-              Loading rooms...
-            </p>
+            <p className="text-sm text-slate-500">Loading rooms...</p>
           </div>
         )}
 
         {isError && (
           <div className="p-5">
             <p className="text-sm text-red-600">
-              Unable to load rooms. Please refresh the page and try
-              again.
+              Unable to load rooms. Please refresh the page and try again.
             </p>
           </div>
         )}
@@ -543,9 +508,7 @@ export default function TenantRoomManager({
                       )}
 
                       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
-                        <span>
-                          Capacity: {room.capacity}
-                        </span>
+                        <span>Capacity: {room.capacity}</span>
 
                         <span>
                           Price:{" "}
@@ -556,9 +519,7 @@ export default function TenantRoomManager({
                           }).format(room.base_price)}
                         </span>
 
-                        <span>
-                          Total rooms: {room.total_rooms}
-                        </span>
+                        <span>Total rooms: {room.total_rooms}</span>
                       </div>
                     </div>
 
@@ -566,15 +527,23 @@ export default function TenantRoomManager({
                       <button
                         type="button"
                         onClick={() =>
-                          handleOpenAvailability(
-                            room.id,
-                            room.room_name,
-                          )
+                          handleOpenAvailability(room.id, room.room_name)
                         }
                         className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                       >
                         <CalendarDays size={14} />
                         Availability
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleOpenPeakSeason(room.id, room.room_name)
+                        }
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                      >
+                        <CalendarDays size={14} />
+                        Peak Season
                       </button>
 
                       <button
@@ -588,10 +557,7 @@ export default function TenantRoomManager({
                       <button
                         type="button"
                         onClick={() =>
-                          handleOpenDelete(
-                            room.id,
-                            room.room_name,
-                          )
+                          handleOpenDelete(room.id, room.room_name)
                         }
                         className="cursor-pointer rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-700"
                       >
@@ -642,10 +608,8 @@ export default function TenantRoomManager({
 
                   <p className="mt-1 text-xs leading-5 text-slate-muted">
                     Are you sure you want to delete{" "}
-                    <span className="font-semibold">
-                      {deletingRoom.name}
-                    </span>
-                    ? This action cannot be undone.
+                    <span className="font-semibold">{deletingRoom.name}</span>?
+                    This action cannot be undone.
                   </p>
                 </div>
               </div>
@@ -687,9 +651,7 @@ export default function TenantRoomManager({
                 className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span>
-                  {deleteMutation.isPending
-                    ? "Deleting..."
-                    : "Delete Room"}
+                  {deleteMutation.isPending ? "Deleting..." : "Delete Room"}
                 </span>
               </button>
             </div>

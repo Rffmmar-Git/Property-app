@@ -7,6 +7,7 @@ import tenantPropertyRouter from "./tenant-property.route";
 import propertyImageRouter from "./property-image.route";
 import tenantRoomRouter from "./tenant-room.route";
 import tenantRoomAvailabilityRouter from "./tenant-room-availability.route";
+import tenantPeakSeasonRouter from "./tenant-peak-season.route";
 import propertyCategoryRouter from "./property-category.route";
 import propertyRouter from "./property.route";
 import destinationRouter from "./destination.route";
@@ -53,6 +54,7 @@ router.use("/tenant/properties", tenantPropertyRouter);
 router.use("/tenant/properties", propertyImageRouter);
 router.use("/tenant/properties", tenantRoomRouter);
 router.use("/tenant/properties", tenantRoomAvailabilityRouter);
+router.use("/tenant/properties", tenantPeakSeasonRouter);
 
 router.use("/properties/categories", propertyCategoryRouter);
 

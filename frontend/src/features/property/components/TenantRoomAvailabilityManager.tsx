@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { CalendarDays, CircleX, Lock } from "lucide-react";
+import {
+  CalendarDays,
+  CircleX,
+  Lock,
+  Plus,
+  X,
+} from "lucide-react";
 
 import { useTenantRoomAvailability } from "../hooks/useTenantRoomAvailability";
 import { useCloseTenantRoomDate } from "../hooks/useCloseTenantRoomDate";
@@ -32,10 +38,13 @@ const formatDate = (value: string): string => {
 export default function TenantRoomAvailabilityManager({
   roomId,
 }: TenantRoomAvailabilityManagerProps) {
+  const [showForm, setShowForm] = useState(false);
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [roomsToClose, setRoomsToClose] = useState("");
   const [closureReason, setClosureReason] = useState("");
+
   const [cancelAvailabilityId, setCancelAvailabilityId] = useState<
     string | null
   >(null);
@@ -48,6 +57,23 @@ export default function TenantRoomAvailabilityManager({
 
   const closeDateMutation = useCloseTenantRoomDate();
   const cancelClosureMutation = useOpenTenantRoomDate();
+
+  const resetForm = () => {
+    setStartDate("");
+    setEndDate("");
+    setRoomsToClose("");
+    setClosureReason("");
+  };
+
+  const handleCloseForm = () => {
+    if (closeDateMutation.isPending) {
+      return;
+    }
+
+    resetForm();
+    closeDateMutation.reset();
+    setShowForm(false);
+  };
 
   const handleCloseDate = (
     event: React.FormEvent<HTMLFormElement>,
@@ -85,10 +111,8 @@ export default function TenantRoomAvailabilityManager({
       },
       {
         onSuccess: () => {
-          setStartDate("");
-          setEndDate("");
-          setRoomsToClose("");
-          setClosureReason("");
+          resetForm();
+          setShowForm(false);
         },
       },
     );
@@ -117,158 +141,210 @@ export default function TenantRoomAvailabilityManager({
 
   return (
     <div className="space-y-6">
-      {/* Close Room Availability Form */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
-        <div className="mb-4 flex items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700 shadow-sm ring-1 ring-slate-200">
-            <CalendarDays className="h-5 w-5" />
-          </div>
+      {/* Header and Add Closure Button */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900">
+            Room Availability
+          </h3>
 
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900">
-              Close Room Availability
-            </h3>
-
-            <p className="mt-1 text-xs text-slate-500">
-              Select a date range and the number of rooms to close.
-            </p>
-          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            Dates with manually reduced room availability.
+          </p>
         </div>
 
-        <form onSubmit={handleCloseDate} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="start-date"
-                className="mb-1.5 block text-sm font-medium text-slate-700"
-              >
-                Start Date
-              </label>
-
-              <input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(event) => {
-                  setStartDate(event.target.value);
-
-                  if (
-                    endDate &&
-                    event.target.value > endDate
-                  ) {
-                    setEndDate(event.target.value);
-                  }
-                }}
-                disabled={isClosing}
-                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="end-date"
-                className="mb-1.5 block text-sm font-medium text-slate-700"
-              >
-                End Date
-              </label>
-
-              <input
-                id="end-date"
-                type="date"
-                min={startDate || undefined}
-                value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
-                disabled={isClosing}
-                className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="rooms-to-close"
-              className="mb-1.5 block text-sm font-medium text-slate-700"
-            >
-              Rooms to Close
-            </label>
-
-            <input
-              id="rooms-to-close"
-              type="number"
-              min={1}
-              step={1}
-              value={roomsToClose}
-              onChange={(event) => setRoomsToClose(event.target.value)}
-              placeholder="e.g. 2"
-              disabled={isClosing}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-            />
-
-            <p className="mt-1 text-xs text-slate-500">
-              Enter the number of rooms to close on each selected date.
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="closure-reason"
-              className="mb-1.5 block text-sm font-medium text-slate-700"
-            >
-              Reason
-              <span className="ml-1 font-normal text-slate-400">
-                (optional)
-              </span>
-            </label>
-
-            <input
-              id="closure-reason"
-              type="text"
-              value={closureReason}
-              onChange={(event) => setClosureReason(event.target.value)}
-              placeholder="e.g. Room maintenance"
-              maxLength={255}
-              disabled={isClosing}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-            />
-          </div>
-
-          {closeDateMutation.isError && (
-            <p className="text-sm text-red-600">
-              {getErrorMessage(
-                closeDateMutation.error,
-                "Failed to close room availability. Please try again.",
-              )}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={
-              !startDate ||
-              !endDate ||
-              !roomsToClose ||
-              Number(roomsToClose) <= 0 ||
-              endDate < startDate ||
-              isClosing
-            }
-            className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Lock className="h-4 w-4" />
-            {isClosing ? "Closing Rooms..." : "Close Rooms"}
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={() => {
+            closeDateMutation.reset();
+            setShowForm(true);
+          }}
+          disabled={showForm}
+          className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Plus className="h-4 w-4" />
+          Add Closure
+        </button>
       </div>
+
+      {/* Close Room Availability Form */}
+      {showForm && (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700 shadow-sm ring-1 ring-slate-200">
+                <CalendarDays className="h-5 w-5" />
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Close Room Availability
+                </h3>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Select a date range and the number of rooms to close.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCloseForm}
+              disabled={isClosing}
+              aria-label="Close form"
+              className="cursor-pointer rounded-md p-1 text-slate-400 transition hover:bg-white hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <form onSubmit={handleCloseDate} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="start-date"
+                  className="mb-1.5 block text-sm font-medium text-slate-700"
+                >
+                  Start Date
+                </label>
+
+                <input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(event) => {
+                    setStartDate(event.target.value);
+
+                    if (
+                      endDate &&
+                      event.target.value > endDate
+                    ) {
+                      setEndDate(event.target.value);
+                    }
+                  }}
+                  disabled={isClosing}
+                  className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="end-date"
+                  className="mb-1.5 block text-sm font-medium text-slate-700"
+                >
+                  End Date
+                </label>
+
+                <input
+                  id="end-date"
+                  type="date"
+                  min={startDate || undefined}
+                  value={endDate}
+                  onChange={(event) => setEndDate(event.target.value)}
+                  disabled={isClosing}
+                  className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="rooms-to-close"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                Rooms to Close
+              </label>
+
+              <input
+                id="rooms-to-close"
+                type="number"
+                min={1}
+                step={1}
+                value={roomsToClose}
+                onChange={(event) => setRoomsToClose(event.target.value)}
+                placeholder="e.g. 2"
+                disabled={isClosing}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+
+              <p className="mt-1 text-xs text-slate-500">
+                Enter the number of rooms to close on each selected date.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="closure-reason"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                Reason
+                <span className="ml-1 font-normal text-slate-400">
+                  (optional)
+                </span>
+              </label>
+
+              <input
+                id="closure-reason"
+                type="text"
+                value={closureReason}
+                onChange={(event) => setClosureReason(event.target.value)}
+                placeholder="e.g. Room maintenance"
+                maxLength={255}
+                disabled={isClosing}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+            </div>
+
+            {closeDateMutation.isError && (
+              <p className="text-sm text-red-600">
+                {getErrorMessage(
+                  closeDateMutation.error,
+                  "Failed to close room availability. Please try again.",
+                )}
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="submit"
+                disabled={
+                  !startDate ||
+                  !endDate ||
+                  !roomsToClose ||
+                  Number(roomsToClose) <= 0 ||
+                  endDate < startDate ||
+                  isClosing
+                }
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Lock className="h-4 w-4" />
+                {isClosing ? "Closing Rooms..." : "Close Rooms"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCloseForm}
+                disabled={isClosing}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Room Availability Records */}
       <div>
         <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-sm font-semibold text-slate-900">
-              Room Availability
+              Closed Dates
             </h3>
 
             <p className="mt-1 text-xs text-slate-500">
-              Dates with manually reduced room availability.
+              Manually close dates for your rooms.
             </p>
           </div>
 

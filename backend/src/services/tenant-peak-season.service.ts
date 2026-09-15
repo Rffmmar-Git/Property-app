@@ -18,10 +18,7 @@ export class TenantPeakSeasonService {
   ) {
     const id = this.parseId(roomId);
 
-    await this.ensureRoomOwnership(
-      id,
-      tenantId,
-    );
+    await this.ensureRoomOwnership(id, tenantId);
 
     const dates = this.parseDateRange(
       data.startDate,
@@ -32,8 +29,7 @@ export class TenantPeakSeasonService {
       roomId: id,
       startDate: dates.startDate,
       endDate: dates.endDate,
-      adjustmentType:
-        data.adjustmentType as adjustment_type,
+      adjustmentType: data.adjustmentType as adjustment_type,
       adjustmentValue: data.adjustmentValue,
     });
   }
@@ -44,14 +40,9 @@ export class TenantPeakSeasonService {
   ) {
     const id = this.parseId(roomId);
 
-    await this.ensureRoomOwnership(
-      id,
-      tenantId,
-    );
+    await this.ensureRoomOwnership(id, tenantId);
 
-    return tenantPeakSeasonRepository.findManyByRoom(
-      id,
-    );
+    return tenantPeakSeasonRepository.findManyByRoom(id);
   }
 
   async getRate(
@@ -60,8 +51,7 @@ export class TenantPeakSeasonService {
   ) {
     const id = this.parseId(rateId);
 
-    const rate =
-      await tenantPeakSeasonRepository.findById(id);
+    const rate = await tenantPeakSeasonRepository.findById(id);
 
     if (!rate) {
       throw new ApiError(
@@ -70,10 +60,7 @@ export class TenantPeakSeasonService {
       );
     }
 
-    await this.ensureRoomOwnership(
-      rate.room_id,
-      tenantId,
-    );
+    await this.ensureRoomOwnership(rate.room_id, tenantId);
 
     return rate;
   }
@@ -85,8 +72,7 @@ export class TenantPeakSeasonService {
   ) {
     const id = this.parseId(rateId);
 
-    const rate =
-      await tenantPeakSeasonRepository.findById(id);
+    const rate = await tenantPeakSeasonRepository.findById(id);
 
     if (!rate) {
       throw new ApiError(
@@ -95,24 +81,33 @@ export class TenantPeakSeasonService {
       );
     }
 
-    await this.ensureRoomOwnership(
-      rate.room_id,
-      tenantId,
-    );
+    await this.ensureRoomOwnership(rate.room_id, tenantId);
+
+    const startDate = data.startDate
+      ? this.parseDate(data.startDate)
+      : rate.start_date;
+
+    const endDate = data.endDate
+      ? this.parseDate(data.endDate)
+      : rate.end_date;
+
+    this.validateDateRange(startDate, endDate);
 
     const updateData = {
-      startDate: data.startDate
-        ? this.parseDate(data.startDate)
-        : undefined,
+      startDate:
+        data.startDate !== undefined
+          ? startDate
+          : undefined,
 
-      endDate: data.endDate
-        ? this.parseDate(data.endDate)
-        : undefined,
+      endDate:
+        data.endDate !== undefined
+          ? endDate
+          : undefined,
 
       adjustmentType:
-        data.adjustmentType as
-          | adjustment_type
-          | undefined,
+        data.adjustmentType !== undefined
+          ? (data.adjustmentType as adjustment_type)
+          : undefined,
 
       adjustmentValue:
         data.adjustmentValue,
@@ -130,8 +125,7 @@ export class TenantPeakSeasonService {
   ) {
     const id = this.parseId(rateId);
 
-    const rate =
-      await tenantPeakSeasonRepository.findById(id);
+    const rate = await tenantPeakSeasonRepository.findById(id);
 
     if (!rate) {
       throw new ApiError(
@@ -140,10 +134,7 @@ export class TenantPeakSeasonService {
       );
     }
 
-    await this.ensureRoomOwnership(
-      rate.room_id,
-      tenantId,
-    );
+    await this.ensureRoomOwnership(rate.room_id, tenantId);
 
     await tenantPeakSeasonRepository.delete(id);
   }
@@ -201,17 +192,24 @@ export class TenantPeakSeasonService {
     const start = this.parseDate(startDate);
     const end = this.parseDate(endDate);
 
-    if (end < start) {
-      throw new ApiError(
-        400,
-        "End date must be on or after start date",
-      );
-    }
+    this.validateDateRange(start, end);
 
     return {
       startDate: start,
       endDate: end,
     };
+  }
+
+  private validateDateRange(
+    startDate: Date,
+    endDate: Date,
+  ) {
+    if (endDate < startDate) {
+      throw new ApiError(
+        400,
+        "End date must be on or after start date",
+      );
+    }
   }
 }
 

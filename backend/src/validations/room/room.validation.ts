@@ -7,10 +7,7 @@ export const createRoomSchema = z.object({
     .min(1, "Room name is required")
     .max(100, "Room name must not exceed 100 characters"),
 
-  description: z
-    .string()
-    .trim()
-    .optional(),
+  description: z.string().trim().optional(),
 
   capacity: z
     .number({
@@ -33,13 +30,92 @@ export const createRoomSchema = z.object({
     .positive("Total rooms must be greater than 0"),
 });
 
-export const updateRoomSchema =
-  createRoomSchema.partial();
+export const updateRoomSchema = createRoomSchema.partial();
 
-export type CreateRoomInput = z.infer<
-  typeof createRoomSchema
+const peakSeasonFields = {
+  startDate: z
+    .string()
+    .regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      "Start date must use YYYY-MM-DD format",
+    ),
+
+  endDate: z
+    .string()
+    .regex(
+      /^\d{4}-\d{2}-\d{2}$/,
+      "End date must use YYYY-MM-DD format",
+    ),
+
+  adjustmentType: z.enum(["PERCENTAGE", "FIXED"]),
+
+  adjustmentValue: z
+    .number({
+      error: "Adjustment value must be a number",
+    })
+    .positive("Adjustment value must be greater than 0"),
+};
+
+export const createPeakSeasonSchema = z
+  .object(peakSeasonFields)
+  .superRefine((data, ctx) => {
+    if (data.endDate < data.startDate) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End date must be on or after start date",
+      });
+    }
+
+    if (
+      data.adjustmentType === "PERCENTAGE" &&
+      data.adjustmentValue > 100
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["adjustmentValue"],
+        message: "Percentage adjustment must not exceed 100",
+      });
+    }
+  });
+
+export const updatePeakSeasonSchema = z
+  .object(peakSeasonFields)
+  .partial()
+  .superRefine((data, ctx) => {
+    if (
+      data.startDate !== undefined &&
+      data.endDate !== undefined &&
+      data.endDate < data.startDate
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End date must be on or after start date",
+      });
+    }
+
+    if (
+      data.adjustmentType === "PERCENTAGE" &&
+      data.adjustmentValue !== undefined &&
+      data.adjustmentValue > 100
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["adjustmentValue"],
+        message: "Percentage adjustment must not exceed 100",
+      });
+    }
+  });
+
+export type CreateRoomInput = z.infer<typeof createRoomSchema>;
+
+export type UpdateRoomInput = z.infer<typeof updateRoomSchema>;
+
+export type CreatePeakSeasonInput = z.infer<
+  typeof createPeakSeasonSchema
 >;
 
-export type UpdateRoomInput = z.infer<
-  typeof updateRoomSchema
+export type UpdatePeakSeasonInput = z.infer<
+  typeof updatePeakSeasonSchema
 >;

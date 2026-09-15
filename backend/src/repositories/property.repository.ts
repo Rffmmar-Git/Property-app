@@ -7,11 +7,10 @@ export class PropertyRepository {
     const where = this.buildWhereClause(query);
     const orderBy = this.buildOrderBy(query);
 
-    const [properties, totalItems] =
-      await prisma.$transaction([
-        this.findProperties(query, where, orderBy),
-        this.countProperties(where),
-      ]);
+    const [properties, totalItems] = await prisma.$transaction([
+      this.findProperties(query, where, orderBy),
+      this.countProperties(where),
+    ]);
 
     return { properties, totalItems };
   }
@@ -51,6 +50,7 @@ export class PropertyRepository {
           orderBy: {
             display_order: "asc",
           },
+
           select: {
             image_url: true,
             display_order: true,
@@ -101,11 +101,16 @@ export class PropertyRepository {
             },
 
             peak_season_rates: {
+              orderBy: {
+                created_at: "desc",
+              },
+
               select: {
                 start_date: true,
                 end_date: true,
                 adjustment_type: true,
                 adjustment_value: true,
+                created_at: true,
               },
             },
           },
@@ -238,7 +243,9 @@ export class PropertyRepository {
           orderBy: {
             display_order: "asc",
           },
+
           take: 1,
+
           select: {
             image_url: true,
           },
@@ -328,11 +335,16 @@ export class PropertyRepository {
                   }
                 : undefined,
 
+              orderBy: {
+                created_at: "desc",
+              },
+
               select: {
                 start_date: true,
                 end_date: true,
                 adjustment_type: true,
                 adjustment_value: true,
+                created_at: true,
               },
             },
           },
