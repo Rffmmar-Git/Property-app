@@ -4,7 +4,6 @@ import {
   FileBarChart,
   Home,
   LogOut,
-  WalletCards,
 } from "lucide-react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 
@@ -43,7 +42,7 @@ export function TenantHeader() {
     {
       label: "Transactions",
       to: "/tenant/transactions",
-      icon: WalletCards,
+      icon: Building2,
     },
     {
       label: "Reports",

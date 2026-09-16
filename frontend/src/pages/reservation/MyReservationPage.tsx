@@ -1,5 +1,6 @@
-import { useMyReservations } from "@/features/reservation/hooks/useMyReservation";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useFilteredMyReservations } from "@/features/reservation/hooks/useFilteredMyReservations";
 import { Loader2, Calendar, MapPin, Clock, ArrowRight } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { MobileHeader } from "@/components/layout/MobileHeader";
@@ -7,10 +8,20 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import PageHeader from "@/components/layout/PageHeader";
 import EmptyState from "@/components/layout/EmptyState";
 
+
 export default function MyReservationsPage() {
   const navigate = useNavigate();
-
-  const { data: reservations, isLoading, isError } = useMyReservations();
+  const [search, setSearch] = useState("");
+  const [date, setDate] = useState("");
+ const {
+  data: reservations,
+  isLoading,
+  isError,
+} = useFilteredMyReservations({
+  search: search || undefined,
+  startDate: date || undefined,
+  endDate: date || undefined,
+});
 
   const formatDate = (date: string) => {
     return date.split("T")[0];
@@ -57,6 +68,23 @@ export default function MyReservationsPage() {
           description="Track your bookings, review statuses, and complete payments."
         />
 
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+  <input
+    type="text"
+    value={search}
+    onChange={(event) => setSearch(event.target.value)}
+    placeholder="Search booking number..."
+    className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-text outline-none transition focus:border-midnight-indigo"
+  />
+
+  <input
+    type="date"
+    value={date}
+    onChange={(event) => setDate(event.target.value)}
+    className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-text outline-none transition focus:border-midnight-indigo sm:w-48"
+  />
+</div>
+
         {!reservations || reservations.length === 0 ? (
           <EmptyState
             dashed
@@ -73,6 +101,7 @@ export default function MyReservationsPage() {
             }
           />
         ) : (
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {reservations.map((item) => (
               <div

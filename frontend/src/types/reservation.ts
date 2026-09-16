@@ -21,5 +21,10 @@ export interface ReservationDetail {
   status?: ReservationStatus;
   paymentStatus: PaymentStatus | null;
   paymentProof?: string | null;
+  bankDetails: {
+  bankName: string | null;
+  accountName: string | null;
+  accountNumber: string | null;
+} | null;
 }
 

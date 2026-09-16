@@ -17,15 +17,7 @@ export function TenantMobileHeader() {
         </Link>
 
         <div className="flex items-center gap-1">
-          <Link
-            to="/notifications"
-            className="relative rounded-full p-2 text-midnight-indigo transition-colors hover:bg-slate-100"
-            title="Notifications"
-          >
-            <Bell className="h-5 w-5" />
 
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-          </Link>
 
           <Link
             to="/tenant/profile"

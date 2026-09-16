@@ -14,10 +14,12 @@ import MyReservationsPage from "@/pages/reservation/MyReservationPage";
 import ReservationDetailPage from "@/pages/reservation/ReservationDetailPage";
 
 import TenantProfilePage from "@/pages/profile/TenantProfilePage";
+import TenantDashboardPage from "@/pages/home/TenantDashboardPage";
 import TenantTransactionPage from "@/pages/payment/TenantTransactionPage";
 import ReportPage from "@/pages/report/ReportPage";
 
 import UnauthorizedPage from "@/pages/error/UnauthorizedPage";
+import ReviewPage from "@/pages/review/ReviewPage";
 
 export const user_role = {
   CUSTOMER: "CUSTOMER",
@@ -48,7 +50,9 @@ export const ROUTES = {
   PAYMENT_PAGE: "/payments/:reservationId",
   MY_RESERVATIONS: "/my-reservations",
   RESERVATION_DETAIL: "/reservations/:id",
+  REVIEW_CUSTOMER: "/reviews/:reservationId",
 
+  TENANT_DASHBOARD: "/tenant/dashboard",
   TENANT_PROFILE: "/tenant/profile",
   TENANT_TRANSACTION: "/tenant/transactions",
   TENANT_REPORT: "/tenant/reports",
@@ -87,7 +91,6 @@ export const routeConfig: AppRoute[] = [
     path: ROUTES.PROPERTY_DETAIL,
     Component: PropertyDetailPage,
   },
-
   {
     path: ROUTES.CREATE_RESERVATION,
     Component: CreateReservationPage,
@@ -112,10 +115,21 @@ export const routeConfig: AppRoute[] = [
     isProtected: true,
     allowedRoles: [user_role.CUSTOMER],
   },
-
   {
     path: ROUTES.TENANT_PROFILE,
     Component: TenantProfilePage,
+    isProtected: true,
+    allowedRoles: [user_role.TENANT],
+  },
+  {
+    path: ROUTES.REVIEW_CUSTOMER,
+    Component: ReviewPage,
+    isProtected: true,
+    allowedRoles: [user_role.CUSTOMER],
+  },
+  {
+    path: ROUTES.TENANT_DASHBOARD,
+    Component: TenantDashboardPage,
     isProtected: true,
     allowedRoles: [user_role.TENANT],
   },

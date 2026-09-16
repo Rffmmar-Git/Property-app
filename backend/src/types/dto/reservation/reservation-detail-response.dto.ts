@@ -22,8 +22,12 @@ export interface ReservationDetailResponseDto {
 
     reservationStatus: reservation_status;
 
-    paymentStatus: payment_status | null;
-
     paymentProof?: string | null;
+
+    bankDetails: {
+    bankName: string | null;
+    accountName: string | null;
+    accountNumber: string | null;
+  } | null;
   };
 }

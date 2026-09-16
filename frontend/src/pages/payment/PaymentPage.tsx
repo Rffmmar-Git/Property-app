@@ -102,7 +102,9 @@ export default function PaymentPage() {
           {/* Kolom Kiri */}
           <div className="space-y-6">
             <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
-              <BankTransferInfo />
+              <BankTransferInfo
+                bankDetails={reservation.bankDetails}
+              />
             </div>
 
             {canUploadProof ? (

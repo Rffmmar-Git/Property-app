@@ -347,6 +347,27 @@ export default function PropertyDetailPage() {
     });
   };
 
+ const handleContinueToBook = () => {
+  if (!id || !activeRoomId || !checkIn || !checkOut) {
+    return;
+  }
+
+  if (!isSelectedStayAvailable) {
+    setDateSelectionError(
+      "Your selected stay includes unavailable dates. Please choose another date range.",
+    );
+    return;
+  }
+
+   navigate(`/reservations/create/${id}`, {
+    state: {
+      roomId: activeRoomId,
+      checkInDate: checkIn,
+      checkOutDate: checkOut,
+    },
+  });
+};
+
   const mapUrl =
     property?.latitude !== null &&
     property?.latitude !== undefined &&
@@ -1005,6 +1026,7 @@ export default function PropertyDetailPage() {
                 peak season adjustments.
               </span>
             </div>
+
           </div>
 
           {/* Booking Summary */}

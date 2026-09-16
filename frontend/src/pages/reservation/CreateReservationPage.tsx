@@ -100,8 +100,8 @@ export default function CreateReservationPage() {
 
       const payload = {
         roomId: Number(roomId),
-        checkInDate: new Date(`${checkInDate}T00:00:00`).toISOString(),
-        checkOutDate: new Date(`${checkOutDate}T00:00:00`).toISOString(),
+        checkInDate: `${checkInDate}T00:00:00.000Z`,
+        checkOutDate: `${checkOutDate}T00:00:00.000Z`,
         guestCount: Number(guests),
       };
 

@@ -26,7 +26,15 @@ export type ReservationComplete =
 
       rooms: {
         include: {
-          properties: true;
+          properties: {
+            include: {
+              users: {
+                include: {
+                  tenant_profiles: true;
+                };
+              };
+            };
+          };
         };
       };
 

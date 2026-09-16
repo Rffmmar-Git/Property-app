@@ -1,4 +1,4 @@
-import { reservation_status } from "../../generated/prisma/client";
+import { reservation_status, payment_status} from "../../generated/prisma/client";
 
 export class ReservationBookingService {
 
@@ -56,6 +56,16 @@ export class ReservationBookingService {
     ) {
       throw new Error(
         "Reservation cannot be cancelled."
+      );
+    }
+  }
+
+  validatePaymentCanBeCancelled(
+    status: payment_status | null | undefined
+  ): void {
+    if (status !== payment_status.PENDING) {
+      throw new Error(
+        "Reservation cannot be cancelled because payment is not pending."
       );
     }
   }

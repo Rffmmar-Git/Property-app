@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+// Pages: Public & Auth
 import HomePage from "../pages/home/HomePage";
 import PropertyListingPage from "../pages/property/PropertyListingPage";
 import PropertyDetailPage from "../pages/property/PropertyDetailPage";
-
 import LoginPage from "../pages/auth/LoginPage";
 import TenantLoginPage from "../pages/auth/TenantLoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
@@ -19,32 +19,42 @@ import TenantProfilePage from "../pages/profile/TenantProfilePage";
 
 import UnauthorizedPage from "../pages/error/UnauthorizedPage";
 
-import TenantDashboardPage from "../pages/tenant/TenantDashboardPage";
+// Feature 2 Tenant Dashboard
+import TenantDashboardPage from "../pages/home/TenantDashboardPage";
+
 import PropertyCategoryPage from "../pages/tenant/PropertyCategoryPage";
 import TenantPropertyPage from "../pages/tenant/TenantPropertyPage";
 
+// Pages: Customer Protected
 import CreateReservationPage from "@/pages/reservation/CreateReservationPage";
-import PaymentPage from "../pages/payment/PaymentPage";
+import PaymentPage from "@/pages/payment/PaymentPage";
 import MyReservationsPage from "@/pages/reservation/MyReservationPage";
 import ReservationDetailPage from "@/pages/reservation/ReservationDetailPage";
+import ReviewPage from "@/pages/review/ReviewPage";
 
+// Pages: Tenant Protected
 import TenantTransactionPage from "@/pages/payment/TenantTransactionPage";
 import ReportPage from "@/pages/report/ReportPage";
 
+// Router Config & Components
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { RoleRoute } from "@/routes/RoleRoute";
 import { user_role } from "@/routes/route-config";
 
+import { NotificationWatcher } from "@/features/notification/components/NotificationWatcher";
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
+      <NotificationWatcher />
+
       <Routes>
-        {/* Customer / Public Routes */}
+        {/* ========================================== */}
+        {/* 1. PUBLIC & AUTH ROUTES                    */}
+        {/* ========================================== */}
+
         <Route path="/" element={<HomePage />} />
-
-        {/* Property */}
         <Route path="/properties" element={<PropertyListingPage />} />
-
         <Route
           path="/properties/:id"
           element={<PropertyDetailPage />}
@@ -82,17 +92,14 @@ export default function AppRouter() {
 
         {/* Customer Auth Routes */}
         <Route path="/login" element={<LoginPage />} />
-
         <Route
           path="/forgot-password"
           element={<ForgotPasswordPage />}
         />
-
         <Route
           path="/reset-password"
           element={<ResetPasswordPage />}
         />
-
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Tenant Auth Routes */}
@@ -100,12 +107,12 @@ export default function AppRouter() {
           path="/tenant/login"
           element={<TenantLoginPage />}
         />
-
         <Route
           path="/register/tenant"
           element={<TenantRegisterPage />}
         />
 
+        {/* Google Auth */}
         <Route
           path="/auth/google/callback"
           element={<GoogleCallbackPage />}
@@ -118,7 +125,10 @@ export default function AppRouter() {
           element={<VerifyEmailPage />}
         />
 
-        {/* Tenant Portal */}
+        {/* ========================================== */}
+        {/* 2. TENANT PORTAL                           */}
+        {/* ========================================== */}
+
         <Route
           path="/tenant/dashboard"
           element={
@@ -146,7 +156,10 @@ export default function AppRouter() {
           }
         />
 
-        {/* Customer Reservation Routes */}
+        {/* ========================================== */}
+        {/* 3. CUSTOMER RESERVATION ROUTES             */}
+        {/* ========================================== */}
+
         <Route
           path="/reservations/create/:id"
           element={
@@ -183,7 +196,19 @@ export default function AppRouter() {
           }
         />
 
-        {/* Tenant Feature 2 Routes */}
+        <Route
+          path="/reviews/:reservationId"
+          element={
+            <RoleRoute allowedRoles={[user_role.CUSTOMER]}>
+              <ReviewPage />
+            </RoleRoute>
+          }
+        />
+
+        {/* ========================================== */}
+        {/* 4. TENANT FEATURE 2 ROUTES                 */}
+        {/* ========================================== */}
+
         <Route
           path="/tenant/transactions"
           element={

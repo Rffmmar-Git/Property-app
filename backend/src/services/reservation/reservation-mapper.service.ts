@@ -50,7 +50,7 @@ export class ReservationMapperService {
         status:
         this.mapReservationStatus(
             reservation.status),
-        
+
         bookingExpiredAt:
           reservation.booking_expired_at,
       },
@@ -93,11 +93,20 @@ export class ReservationMapperService {
         this.mapReservationStatus(
             reservation.status),
 
-        paymentStatus:
-          reservation.payments?.status ?? null,
-        
+
+
         paymentProof:
           reservation.payments?.proof_image ?? null,
+
+        bankDetails: reservation.rooms.properties.users.tenant_profiles? {
+            bankName:
+              reservation.rooms.properties.users.tenant_profiles.bank_name,
+            accountName:
+              reservation.rooms.properties.users.tenant_profiles.bank_account_name,
+            accountNumber:
+              reservation.rooms.properties.users.tenant_profiles.bank_account_number,
+          }
+        : null,
       },
     };
   }
@@ -147,7 +156,7 @@ export class ReservationMapperService {
           reservationStatus:
             this.mapReservationStatus(
                 reservation.status ),
- 
+
           paymentStatus:
             reservation.payments?.status ?? null,
         })

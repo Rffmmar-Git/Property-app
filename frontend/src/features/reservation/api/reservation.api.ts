@@ -24,3 +24,13 @@ export const getMyReservations = async (): Promise<ReservationDetail[]> => {
 
   return response.data.data;
 };
+
+export const cancelReservation = async (
+  reservationId: number,
+) => {
+  const response = await api.patch(
+    `/reservations/${reservationId}/cancel`,
+  );
+
+  return response.data;
+};

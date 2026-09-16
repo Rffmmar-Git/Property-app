@@ -14,6 +14,7 @@ export interface TenantTransaction {
   reservationStatus: ReservationStatus;
   paymentStatus: PaymentStatus;
   paymentProof: string | null;
+  bookingExpiredAt: string | null;
   createdAt: string;
 }
 

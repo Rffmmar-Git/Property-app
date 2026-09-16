@@ -24,8 +24,10 @@ export function sanitizeDateOnly(
   }
 
   return new Date(
-    result.getFullYear(),
-    result.getMonth(),
-    result.getDate()
+    Date.UTC(
+      result.getFullYear(),
+      result.getMonth(),
+      result.getDate()
+    )
   );
 }

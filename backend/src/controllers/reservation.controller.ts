@@ -4,7 +4,8 @@ import { ApiResponse } from "../utils";
 import { createReservationSchema } from "../validations/reservation/create-reservation.validation";
 import { reservationIdSchema } from "../validations/common/reservation-id.schema";
 import { reservationService } from "../services/reservation/reservation.service";
-
+import { ReservationQueryDto } from "../types/dto";
+import { sanitizeReservationQuery } from "../utils/sanitize";
 export class ReservationController {
   createReservation = asyncHandler(
     async (req: Request, res: Response) => {
@@ -59,23 +60,28 @@ export class ReservationController {
   );
 
   getMyReservations = asyncHandler(
-    async (req: Request, res: Response) => {
-      const userId = Number(req.user!.id);
+  async (req: Request, res: Response) => {
+    const userId = Number(req.user!.id);
 
-      const result =
-        await reservationService.getMyReservations(
-          userId
-        );
+    const query = sanitizeReservationQuery(
+      req.query as Partial<ReservationQueryDto>
+    );
 
-      return res.status(200).json(
-        new ApiResponse(
-          true,
-          result.message,
-          result.data
-        )
+    const result =
+      await reservationService.getMyReservations(
+        userId,
+        query
       );
-    }
-  );
+
+    return res.status(200).json(
+      new ApiResponse(
+        true,
+        result.message,
+        result.data
+      )
+    );
+  }
+);
 
   cancelReservation = asyncHandler(
     async (req: Request, res: Response) => {

@@ -1,6 +1,6 @@
 import { Bell, Building2, User } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
-
+import { NotificationBell } from "@/features/notification/components/NotificationBell";
 export function Header() {
   // Ambil dan parsing token dari localStorage (Zustand persist store)
   const rawAuth = localStorage.getItem("property-app-auth");
@@ -73,15 +73,7 @@ export function Header() {
           {token ? (
             <>
               {/* Notifications */}
-              <Link
-                to="/notifications"
-                className="relative rounded-full p-2 text-midnight-indigo transition-colors hover:bg-slate-100"
-                title="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-
-                <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-              </Link>
+              <NotificationBell />
 
               {/* Profile */}
               <Link

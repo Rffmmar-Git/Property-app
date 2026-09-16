@@ -6,7 +6,21 @@ import {
 } from "../generated/prisma/client";
 import { ReservationComplete } from "../types/prisma";
 import { TenantTransactionQueryDto } from "../types/dto";
+import { ReservationQueryDto } from "../types/dto";
 
+export type TenantTransactionReservation =
+  Prisma.reservationsGetPayload<{
+    include: {
+      users: true;
+      rooms: {
+        include: {
+          properties: true;
+        };
+      };
+      payments: true;
+      reviews: true;
+    };
+  }>;
 export class ReservationRepository {
 //  Create reservation.
   async create(
@@ -36,35 +50,11 @@ async createWithTransaction(
   }
 // Find reservation with all required relations.
   async findCompleteById(
-    reservationId: number
-  ): Promise<ReservationComplete | null> {
-    return prisma.reservations.findFirst({
-      where: {
-        id: BigInt(reservationId),
-      },
-
-      include: {
-        users: true,
-
-        rooms: {
-          include: {
-            properties: true,
-          },
-        },
-
-        payments: true,
-
-        reviews: true,
-      },
-    });
-  }
-
-  async findCompleteManyByUserId(
-  userId: number
-): Promise<ReservationComplete[]> {
-  return prisma.reservations.findMany({
+  reservationId: number
+): Promise<ReservationComplete | null> {
+  return prisma.reservations.findFirst({
     where: {
-      user_id: BigInt(userId),
+      id: BigInt(reservationId),
     },
 
     include: {
@@ -72,7 +62,64 @@ async createWithTransaction(
 
       rooms: {
         include: {
-          properties: true,
+          properties: {
+            include: {
+              users: {
+                include: {
+                  tenant_profiles: true,
+                },
+              },
+            },
+          },
+        },
+      },
+
+      payments: true,
+
+      reviews: true,
+    },
+  });
+}
+
+async findCompleteManyByUserId(
+  userId: number,
+  query?: Partial<ReservationQueryDto>
+): Promise<ReservationComplete[]> {
+  const where = {
+    user_id: BigInt(userId),
+    ...(query?.search && {
+      booking_code: {
+        contains: query.search,
+        mode: "insensitive" as const,
+      },
+    }),
+    ...(query?.startDate && {
+      check_in: {
+        gte: query.startDate,
+        ...(query.endDate && {
+          lte: query.endDate,
+        }),
+      },
+    }),
+  };
+
+  return prisma.reservations.findMany({
+    where,
+
+    include: {
+      users: true,
+
+      rooms: {
+        include: {
+          properties: {
+            include: {
+              users: {
+                include: {
+                  tenant_profiles: true,
+                },
+              },
+            },
+          },
         },
       },
 
@@ -86,7 +133,6 @@ async createWithTransaction(
     },
   });
 }
-
 // Find reservation by booking code.
   async findByBookingCode(
     bookingCode: string
@@ -209,7 +255,7 @@ async createWithTransaction(
     });
   }
 
-  async findByIdWithTransaction(
+async findByIdWithTransaction(
   tx: Prisma.TransactionClient,
   reservationId: number
 ): Promise<ReservationComplete | null> {
@@ -221,13 +267,21 @@ async createWithTransaction(
       users: true,
       rooms: {
         include: {
-          properties: true,
+          properties: {
+            include: {
+              users: {
+                include: {
+                  tenant_profiles: true,
+                },
+              },
+            },
+          },
         },
       },
       payments: true,
       reviews: true,
     },
-  }) as Promise<ReservationComplete | null>;
+  });
 }
 
   async markExpiredIfPending(
@@ -266,15 +320,22 @@ async createWithTransaction(
       users: true,
       rooms: {
         include: {
-          properties: true,
+          properties: {
+            include: {
+              users: {
+                include: {
+                  tenant_profiles: true,
+                },
+              },
+            },
+          },
         },
       },
       payments: true,
       reviews: true,
     },
-  }) as Promise<ReservationComplete | null>;
+  });
 }
-
   async cancelReservation(
   reservationId: number,
   reservationData: Prisma.reservationsUpdateInput
@@ -421,7 +482,15 @@ async findConfirmedReservationsForReminder(
 
       rooms: {
         include: {
-          properties: true,
+          properties: {
+            include: {
+              users: {
+                include: {
+                  tenant_profiles: true,
+                },
+              },
+            },
+          },
         },
       },
 

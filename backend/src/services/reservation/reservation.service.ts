@@ -11,6 +11,7 @@ import { ReservationPricingService,ReservationPricing, } from "./reservation-pri
 import { ReservationValidationService } from "./reservation-validation.service";
 import { ReservationBookingService } from "./reservation-booking.service";
 import { ReservationMapperService } from "./reservation-mapper.service";
+import { ReservationQueryDto } from "../../types/dto";
 import { CancelReservationResponseDto } from "../../types/dto/reservation/cancel-reservation-response.dto";
 export class ReservationService {
   constructor(
@@ -108,13 +109,15 @@ export class ReservationService {
     );
 }
   async getMyReservations(
-  userId: number
+  userId: number,
+  query?: Partial<ReservationQueryDto>
 ) {
   const reservations =
-    await this.reservationRepository
-      .findCompleteManyByUserId(
-        userId
-      );
+  await this.reservationRepository
+    .findCompleteManyByUserId(
+      userId,
+      query
+    );
 
   const updatedReservations = [];
 
@@ -168,6 +171,10 @@ async cancelReservation(
 
   this.bookingService.validateReservationCanBeCancelled(
     reservation.status
+  );
+
+  this.bookingService.validatePaymentCanBeCancelled(
+   reservation.payments?.status
   );
 
   this.bookingService.validateBookingExpired(

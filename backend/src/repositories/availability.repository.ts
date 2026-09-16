@@ -5,27 +5,71 @@ import {
 } from "../generated/prisma/client";
 
 export class AvailabilityRepository {
+
+
   /**
    * Find room availabilities within date range.
    */
+
+
   async findManyByRoomIdAndDateRange(
-    roomId: number,
-    checkIn: Date,
-    checkOut: Date
-  ): Promise<room_availabilities[]> {
-    return prisma.room_availabilities.findMany({
-      where: {
-        room_id: BigInt(roomId),
-        available_date: {
-          gte: checkIn,
-          lt: checkOut,
-        },
+  roomId: number,
+  checkIn: Date,
+  checkOut: Date
+): Promise<room_availabilities[]> {
+  const result = await prisma.room_availabilities.findMany({
+    where: {
+      room_id: BigInt(roomId),
+      available_date: {
+        gte: checkIn,
+        lt: checkOut,
       },
-      orderBy: {
-        available_date: "asc",
-      },
-    });
-  }
+    },
+    orderBy: {
+      available_date: "asc",
+    },
+  });
+
+  console.log("=== RAW AVAILABILITY QUERY ===");
+  console.log("roomId:", roomId);
+  console.log("checkIn:", checkIn.toISOString());
+  console.log("checkOut:", checkOut.toISOString());
+
+  console.log(
+    "MATCHED:",
+    result.map((item) => ({
+      id: item.id.toString(),
+      roomId: item.room_id.toString(),
+      date: item.available_date.toISOString(),
+      availableRooms: item.available_rooms,
+      isClosed: item.is_closed,
+    })),
+  );
+
+  const allResult = await prisma.room_availabilities.findMany({
+    where: {
+      room_id: BigInt(roomId),
+    },
+    orderBy: {
+      available_date: "asc",
+    },
+  });
+
+  console.log(
+    "ALL ROOM AVAILABILITIES:",
+    allResult.map((item) => ({
+      id: item.id.toString(),
+      roomId: item.room_id.toString(),
+      date: item.available_date.toISOString(),
+      availableRooms: item.available_rooms,
+      isClosed: item.is_closed,
+    })),
+  );
+
+  console.log("==============================");
+
+  return result;
+}
 
   /**
    * Update available rooms.
@@ -114,4 +158,6 @@ export class AvailabilityRepository {
 
     return result.count;
   }
+
+
 }

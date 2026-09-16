@@ -33,6 +33,7 @@ export default function SalesReport() {
   const [propertyId, setPropertyId] = useState<number | undefined>(undefined);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [search, setSearch] = useState("");
   const { data: properties = [] } = useTenantProperties();
 
   const [sortBy, setSortBy] = useState<
@@ -49,6 +50,7 @@ export default function SalesReport() {
     propertyId,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
+    search: search || undefined,
     sortBy,
     order,
     };
@@ -70,6 +72,7 @@ export default function SalesReport() {
   setPropertyId(undefined);
   setStartDate("");
   setEndDate("");
+  setSearch("");
   setSortBy("check_in");
   setOrder("desc");
   setPage(1);
@@ -183,6 +186,13 @@ export default function SalesReport() {
               { label: "Ascending", value: "asc" },
             ]}
           />
+          <TextField
+            id="sales-search"
+            label="Search"
+            placeholder="Booking code, name, or email"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -214,6 +224,26 @@ export default function SalesReport() {
           <div className="h-64 w-full text-midnight-indigo">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ left: 8, right: 8 }}>
+                <defs>
+                  <linearGradient
+                    id="salesRevenueGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor="currentColor"
+                      stopOpacity={0.95}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor="currentColor"
+                      stopOpacity={0.45}
+                    />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   stroke="#e2e8f0"
@@ -246,8 +276,10 @@ export default function SalesReport() {
                 />
                 <Bar
                   dataKey="revenue"
-                  fill="currentColor"
-                  radius={[6, 6, 0, 0]}
+                  fill="url(#salesRevenueGradient)"
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={64}
+                  activeBar={{ fill: "currentColor", fillOpacity: 1 }}
                 />
               </BarChart>
             </ResponsiveContainer>

@@ -3,8 +3,9 @@ import { payments } from "../../generated/prisma/client";
 import { UploadPaymentResponseDto } from "../../types/dto/payment/upload-payment-response.dto";
 import { ConfirmPaymentResponseDto } from "../../types/dto/payment/confirm-payment-response.dto";
 import { RejectPaymentResponseDto } from "../../types/dto/payment/reject-payment-response.dto";
-import { ReservationComplete } from "../../types/prisma";
 import { TenantTransactionResponseDto } from "../../types/dto/payment/tenant-transaction-response.dto";
+import type { TenantTransactionReservation } from "../../repositories/reservation.repository";
+
 export class PaymentMapperService {
   buildUploadPaymentResponse(
     payment: payments
@@ -72,7 +73,7 @@ export class PaymentMapperService {
   }
 
 buildTenantTransactionResponse(
-  reservations: ReservationComplete[],
+  reservations: TenantTransactionReservation[],
   total: number,
   page: number,
   limit: number
