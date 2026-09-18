@@ -82,9 +82,10 @@ model properties {
   longitude           Decimal?            @db.Decimal(10, 7)
   check_in_time       DateTime?           @default(dbgenerated("'14:00:00'::time without time zone")) @db.Time(6)
   check_out_time      DateTime?           @default(dbgenerated("'12:00:00'::time without time zone")) @db.Time(6)
-  created_at          DateTime?           @default(now()) @db.Timestamp(6)
-  updated_at          DateTime?           @default(now()) @db.Timestamp(6)
-  deleted_at          DateTime?           @db.Timestamp(6)
+  status              property_status     @default(DRAFT)
+  created_at          DateTime?            @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?            @default(now()) @db.Timestamp(6)
+  deleted_at          DateTime?            @db.Timestamp(6)
   property_categories property_categories @relation(fields: [category_id], references: [id], onUpdate: NoAction, map: "fk_property_category")
   destinations        destinations        @relation(fields: [destination_id], references: [id], onUpdate: NoAction, map: "fk_property_destination")
   users               users               @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_property_tenant")
@@ -111,7 +112,7 @@ model property_images {
   image_url     String
   created_at    DateTime?  @default(now()) @db.Timestamp(6)
   display_order Int        @default(1)
-  properties    properties @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_property_images")
+  properties    properties @relation(fields: [property_id], references: [id], onDelete: Cascade, map: "fk_property_images")
 
   @@index([property_id], map: "idx_property_images_property")
 }
@@ -132,9 +133,9 @@ model reservations {
   booking_expired_at     DateTime            @db.Timestamp(6)
   confirmed_at           DateTime?           @db.Timestamp(6)
   cancelled_at           DateTime?           @db.Timestamp(6)
-  completed_at           DateTime?           @db.Timestamp(6)
-  created_at             DateTime?           @default(now()) @db.Timestamp(6)
-  updated_at             DateTime?           @default(now()) @db.Timestamp(6)
+  completed_at            DateTime?           @db.Timestamp(6)
+  created_at             DateTime?            @default(now()) @db.Timestamp(6)
+  updated_at             DateTime?            @default(now()) @db.Timestamp(6)
   payments               payments?
   rooms                  rooms               @relation(fields: [room_id], references: [id], onUpdate: NoAction, map: "fk_reservation_room")
   users                  users               @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_reservation_user")
@@ -168,7 +169,6 @@ model reviews {
   @@index([user_id], map: "idx_review_user")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model room_availabilities {
   id              BigInt    @id @default(autoincrement())
   room_id         BigInt
@@ -185,7 +185,6 @@ model room_availabilities {
   @@index([available_date], map: "idx_room_availability_date")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model rooms {
   id                  BigInt                @id @default(autoincrement())
   property_id         BigInt
@@ -194,13 +193,13 @@ model rooms {
   capacity            Int
   base_price          Decimal               @db.Decimal(12, 2)
   total_rooms         Int
-  created_at          DateTime?             @default(now()) @db.Timestamp(6)
-  updated_at          DateTime?             @default(now()) @db.Timestamp(6)
-  deleted_at          DateTime?             @db.Timestamp(6)
+  created_at           DateTime?             @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?             @default(now()) @db.Timestamp(6)
+  deleted_at           DateTime?             @db.Timestamp(6)
   peak_season_rates   peak_season_rates[]
   reservations        reservations[]
   room_availabilities room_availabilities[]
-  properties          properties            @relation(fields: [property_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_room_property")
+  properties          properties            @relation(fields: [property_id], references: [id], onDelete: Cascade, map: "fk_room_property")
 
   @@unique([property_id, room_name], map: "uq_room_name")
   @@index([room_name], map: "idx_room_name")
@@ -220,10 +219,9 @@ model tenant_profiles {
   created_at            DateTime? @default(now()) @db.Timestamp(6)
   updated_at            DateTime? @default(now()) @db.Timestamp(6)
   identity_document_url String?
-  users                 users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tenant_user")
+  users                 users     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "fk_tenant_user")
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model users {
   id                  BigInt                @id @default(autoincrement())
   full_name           String                @db.VarChar(100)
@@ -234,15 +232,15 @@ model users {
   phone_number        String?               @db.VarChar(20)
   profile_picture     String?
   is_verified         Boolean?              @default(false)
-  created_at          DateTime?             @default(now()) @db.Timestamp(6)
-  updated_at          DateTime?             @default(now()) @db.Timestamp(6)
+  created_at           DateTime?             @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?             @default(now()) @db.Timestamp(6)
   email_verifications email_verifications[]
   password_resets     password_resets[]
   properties          properties[]
   reservations        reservations[]
   reviews             reviews[]
   tenant_profiles     tenant_profiles?
-
+  
   @@index([email], map: "idx_users_email")
 }
 
@@ -261,6 +259,11 @@ enum payment_status {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+enum property_status {
+  DRAFT
+  PUBLISHED
 }
 
 enum reservation_status {

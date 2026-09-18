@@ -1,4 +1,4 @@
-import HomeNavbar from "../../features/home/components/HomeNavbar";
+import { TenantHeader } from "../../components/layout/TenantHeader";
 import TenantProfile from "../../features/profile/components/TenantProfile";
 import { useTenantProfile } from "../../features/profile/hooks/useTenantProfile";
 
@@ -12,13 +12,13 @@ export default function TenantProfilePage() {
   if (isLoading) {
     return (
       <>
-        <HomeNavbar />
+        <TenantHeader />
 
         <main className="min-h-screen bg-gray-50 px-6 py-10">
           <div className="mx-auto max-w-5xl">
             <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
 
-            <div className="mt-6 h-96 animate-pulse rounded-2xl bg-white shadow-sm" />
+            <div className="mt-6 h-96 rounded-2xl bg-white shadow-sm" />
           </div>
         </main>
       </>
@@ -28,7 +28,7 @@ export default function TenantProfilePage() {
   if (isError || !profile) {
     return (
       <>
-        <HomeNavbar />
+        <TenantHeader />
 
         <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
           <p className="text-sm text-red-600">
@@ -41,7 +41,7 @@ export default function TenantProfilePage() {
 
   return (
     <>
-      <HomeNavbar />
+      <TenantHeader />
 
       <main className="min-h-screen bg-gray-50 px-6 py-10">
         <div className="mx-auto max-w-5xl">

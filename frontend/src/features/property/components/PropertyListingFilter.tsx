@@ -82,7 +82,7 @@ export default function PropertyListingFilter({
             onChange={(event) => {
               onSearchChange(event.target.value);
             }}
-            placeholder="Search property name..."
+            placeholder="Search property name or city..."
             className="w-full bg-transparent text-sm text-slate-text outline-none placeholder:text-slate-muted"
           />
         </div>

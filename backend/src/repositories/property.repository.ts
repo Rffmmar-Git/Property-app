@@ -7,10 +7,11 @@ export class PropertyRepository {
     const where = this.buildWhereClause(query);
     const orderBy = this.buildOrderBy(query);
 
-    const [properties, totalItems] = await prisma.$transaction([
-      this.findProperties(query, where, orderBy),
-      this.countProperties(where),
-    ]);
+    const [properties, totalItems] =
+      await prisma.$transaction([
+        this.findProperties(query, where, orderBy),
+        this.countProperties(where),
+      ]);
 
     return { properties, totalItems };
   }
@@ -20,8 +21,8 @@ export class PropertyRepository {
       where: {
         id,
         deleted_at: null,
+        status: "PUBLISHED",
       },
-
       select: {
         id: true,
         name: true,
@@ -153,13 +154,26 @@ export class PropertyRepository {
   ): Prisma.propertiesWhereInput {
     const where: Prisma.propertiesWhereInput = {
       deleted_at: null,
+      status: "PUBLISHED",
     };
 
     if (query.search) {
-      where.name = {
-        contains: query.search,
-        mode: "insensitive",
-      };
+      where.OR = [
+        {
+          name: {
+            contains: query.search,
+            mode: "insensitive",
+          },
+        },
+        {
+          destinations: {
+            city: {
+              contains: query.search,
+              mode: "insensitive",
+            },
+          },
+        },
+      ];
     }
 
     if (query.city) {

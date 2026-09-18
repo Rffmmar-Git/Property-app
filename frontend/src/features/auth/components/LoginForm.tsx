@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
 
 import { useLogin } from "../hooks/useLogin";
+
+interface ApiErrorResponse {
+  success?: boolean;
+  message?: string;
+}
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -27,6 +33,17 @@ export function LoginForm() {
       },
     );
   };
+
+  const errorMessage =
+    loginMutation.error instanceof AxiosError
+      ? (
+          loginMutation.error.response?.data as
+            | ApiErrorResponse
+            | undefined
+        )?.message ?? "Unable to login."
+      : loginMutation.error instanceof Error
+        ? loginMutation.error.message
+        : "Unable to login.";
 
   const handleGoogleLogin = () => {
     window.location.href = "http://localhost:8000/api/auth/google";
@@ -78,9 +95,15 @@ export function LoginForm() {
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? (
-            <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.8} />
+            <EyeOff
+              className="h-[18px] w-[18px]"
+              strokeWidth={1.8}
+            />
           ) : (
-            <Eye className="h-[18px] w-[18px]" strokeWidth={1.8} />
+            <Eye
+              className="h-[18px] w-[18px]"
+              strokeWidth={1.8}
+            />
           )}
         </button>
       </div>
@@ -98,7 +121,7 @@ export function LoginForm() {
       {/* Error message */}
       {loginMutation.isError && (
         <div className="mt-3 rounded-md bg-red-50 px-3 py-2 font-body-sm text-body-sm text-red-600">
-          Invalid email or password.
+          {errorMessage}
         </div>
       )}
 
@@ -128,7 +151,9 @@ export function LoginForm() {
       <div className="my-5 flex items-center gap-3">
         <div className="h-px flex-1 bg-outline-variant" />
 
-        <span className="font-label-sm text-label-sm text-slate-muted">OR</span>
+        <span className="font-label-sm text-label-sm text-slate-muted">
+          OR
+        </span>
 
         <div className="h-px flex-1 bg-outline-variant" />
       </div>

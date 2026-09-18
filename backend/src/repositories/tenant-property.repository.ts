@@ -1,9 +1,13 @@
 import prisma from "../config/prisma";
-
 import {
   CreatePropertyInput,
   UpdatePropertyInput,
 } from "../validations/property";
+import type {
+  PropertyQueryDto,
+  PropertySortBy,
+  PropertySortOrder,
+} from "../types/dto/property/property-query.dto";
 
 const timeToUtcDate = (time: string): Date => {
   const [hours, minutes] = time.split(":").map(Number);
@@ -26,11 +30,10 @@ export class TenantPropertyRepository {
         address: data.address,
         latitude: data.latitude,
         longitude: data.longitude,
-
+        status: "DRAFT",
         check_in_time: data.checkInTime
           ? timeToUtcDate(data.checkInTime)
           : undefined,
-
         check_out_time: data.checkOutTime
           ? timeToUtcDate(data.checkOutTime)
           : undefined,
@@ -48,17 +51,14 @@ export class TenantPropertyRepository {
         tenant_id: tenantId,
         deleted_at: null,
       },
-
       include: {
         property_categories: true,
         destinations: true,
-
         property_images: {
           orderBy: {
             display_order: "asc",
           },
         },
-
         rooms: {
           where: {
             deleted_at: null,
@@ -70,34 +70,82 @@ export class TenantPropertyRepository {
 
   async findPropertiesByTenant(
     tenantId: bigint,
+    query: PropertyQueryDto = {},
   ) {
-    return prisma.properties.findMany({
-      where: {
-        tenant_id: tenantId,
-        deleted_at: null,
-      },
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
 
-      include: {
-        property_categories: true,
-        destinations: true,
+    const where = {
+      tenant_id: tenantId,
+      deleted_at: null,
+      ...(query.search
+        ? {
+            OR: [
+              {
+                name: {
+                  contains: query.search,
+                  mode: "insensitive" as const,
+                },
+              },
+              {
+                destinations: {
+                  city: {
+                    contains: query.search,
+                    mode: "insensitive" as const,
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+      ...(query.category
+        ? {
+            property_categories: {
+              name: {
+                contains: query.category,
+                mode: "insensitive" as const,
+              },
+            },
+          }
+        : {}),
+    };
 
-        property_images: {
-          orderBy: {
-            display_order: "asc",
+    const orderBy = this.buildOrderBy(
+      query.sortBy,
+      query.order,
+    );
+
+    const [properties, totalItems] = await prisma.$transaction([
+      prisma.properties.findMany({
+        where,
+        include: {
+          property_categories: true,
+          destinations: true,
+          property_images: {
+            orderBy: {
+              display_order: "asc",
+            },
+            take: 1,
+          },
+          rooms: {
+            where: {
+              deleted_at: null,
+            },
           },
         },
+        orderBy,
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.properties.count({
+        where,
+      }),
+    ]);
 
-        rooms: {
-          where: {
-            deleted_at: null,
-          },
-        },
-      },
-
-      orderBy: {
-        created_at: "desc",
-      },
-    });
+    return {
+      properties,
+      totalItems,
+    };
   }
 
   async updateProperty(
@@ -108,45 +156,49 @@ export class TenantPropertyRepository {
       where: {
         id,
       },
-
       data: {
-        ...(data.name !== undefined && {
-          name: data.name,
-        }),
-
         ...(data.categoryId !== undefined && {
           category_id: BigInt(data.categoryId),
         }),
-
         ...(data.destinationId !== undefined && {
           destination_id: BigInt(data.destinationId),
         }),
-
+        ...(data.name !== undefined && {
+          name: data.name,
+        }),
         ...(data.description !== undefined && {
           description: data.description,
         }),
-
         ...(data.address !== undefined && {
           address: data.address,
         }),
-
         ...(data.latitude !== undefined && {
           latitude: data.latitude,
         }),
-
         ...(data.longitude !== undefined && {
           longitude: data.longitude,
         }),
-
         ...(data.checkInTime !== undefined && {
-          check_in_time: timeToUtcDate(data.checkInTime),
+          check_in_time: data.checkInTime
+            ? timeToUtcDate(data.checkInTime)
+            : null,
         }),
-
         ...(data.checkOutTime !== undefined && {
-          check_out_time: timeToUtcDate(data.checkOutTime),
+          check_out_time: data.checkOutTime
+            ? timeToUtcDate(data.checkOutTime)
+            : null,
         }),
+      },
+    });
+  }
 
-        updated_at: new Date(),
+  async publishProperty(id: bigint) {
+    return prisma.properties.update({
+      where: {
+        id,
+      },
+      data: {
+        status: "PUBLISHED",
       },
     });
   }
@@ -156,12 +208,30 @@ export class TenantPropertyRepository {
       where: {
         id,
       },
-
       data: {
         deleted_at: new Date(),
-        updated_at: new Date(),
       },
     });
+  }
+
+  private buildOrderBy(
+    sortBy?: PropertySortBy,
+    order?: PropertySortOrder,
+  ) {
+    const direction = order ?? "desc";
+
+    switch (sortBy) {
+      case "name":
+        return {
+          name: direction,
+        };
+
+      case "created_at":
+      default:
+        return {
+          created_at: direction,
+        };
+    }
   }
 }
 

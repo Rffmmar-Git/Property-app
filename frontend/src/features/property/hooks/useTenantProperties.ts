@@ -1,9 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMyProperties } from "../api/tenant-property.api";
+import {
+  getMyProperties,
+  type TenantPropertyQuery,
+} from "../api/tenant-property.api";
 
-export const useTenantProperties = () => {
+export const useTenantProperties = (
+  query: TenantPropertyQuery = {},
+) => {
   return useQuery({
-    queryKey: ["tenant-properties"],
-    queryFn: getMyProperties,
+    queryKey: ["tenant-properties", query],
+    queryFn: () => getMyProperties(query),
   });
 };

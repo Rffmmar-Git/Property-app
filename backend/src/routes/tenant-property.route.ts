@@ -42,6 +42,11 @@ router.patch(
   tenantPropertyController.updateProperty,
 );
 
+router.patch(
+  "/mine/:id/publish",
+  tenantPropertyController.publishProperty,
+);
+
 router.delete(
   "/mine/:id",
   tenantPropertyController.deleteProperty,

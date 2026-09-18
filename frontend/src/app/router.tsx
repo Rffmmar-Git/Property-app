@@ -19,11 +19,12 @@ import TenantProfilePage from "../pages/profile/TenantProfilePage";
 
 import UnauthorizedPage from "../pages/error/UnauthorizedPage";
 
-// Feature 2 Tenant Dashboard
+// Tenant Dashboard
 import TenantDashboardPage from "../pages/home/TenantDashboardPage";
 
 import PropertyCategoryPage from "../pages/tenant/PropertyCategoryPage";
 import TenantPropertyPage from "../pages/tenant/TenantPropertyPage";
+import TenantPropertyEditPage from "../pages/tenant/TenantPropertyEditPage";
 
 // Pages: Customer Protected
 import CreateReservationPage from "@/pages/reservation/CreateReservationPage";
@@ -54,7 +55,12 @@ export default function AppRouter() {
         {/* ========================================== */}
 
         <Route path="/" element={<HomePage />} />
-        <Route path="/properties" element={<PropertyListingPage />} />
+
+        <Route
+          path="/properties"
+          element={<PropertyListingPage />}
+        />
+
         <Route
           path="/properties/:id"
           element={<PropertyDetailPage />}
@@ -91,22 +97,32 @@ export default function AppRouter() {
         />
 
         {/* Customer Auth Routes */}
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+
         <Route
           path="/forgot-password"
           element={<ForgotPasswordPage />}
         />
+
         <Route
           path="/reset-password"
           element={<ResetPasswordPage />}
         />
-        <Route path="/register" element={<RegisterPage />} />
+
+        <Route
+          path="/register"
+          element={<RegisterPage />}
+        />
 
         {/* Tenant Auth Routes */}
         <Route
           path="/tenant/login"
           element={<TenantLoginPage />}
         />
+
         <Route
           path="/register/tenant"
           element={<TenantRegisterPage />}
@@ -118,7 +134,10 @@ export default function AppRouter() {
           element={<GoogleCallbackPage />}
         />
 
-        <Route path="/check-email" element={<CheckEmailPage />} />
+        <Route
+          path="/check-email"
+          element={<CheckEmailPage />}
+        />
 
         <Route
           path="/verify-email"
@@ -152,6 +171,15 @@ export default function AppRouter() {
           element={
             <RoleRoute allowedRoles={[user_role.TENANT]}>
               <TenantPropertyPage />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/tenant/properties/:id/edit"
+          element={
+            <RoleRoute allowedRoles={[user_role.TENANT]}>
+              <TenantPropertyEditPage />
             </RoleRoute>
           }
         />

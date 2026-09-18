@@ -347,26 +347,26 @@ export default function PropertyDetailPage() {
     });
   };
 
- const handleContinueToBook = () => {
-  if (!id || !activeRoomId || !checkIn || !checkOut) {
-    return;
-  }
+  const handleContinueToBook = () => {
+    if (!id || !activeRoomId || !checkIn || !checkOut) {
+      return;
+    }
 
-  if (!isSelectedStayAvailable) {
-    setDateSelectionError(
-      "Your selected stay includes unavailable dates. Please choose another date range.",
-    );
-    return;
-  }
+    if (!isSelectedStayAvailable) {
+      setDateSelectionError(
+        "Your selected stay includes unavailable dates. Please choose another date range.",
+      );
+      return;
+    }
 
-   navigate(`/reservations/create/${id}`, {
-    state: {
-      roomId: activeRoomId,
-      checkInDate: checkIn,
-      checkOutDate: checkOut,
-    },
-  });
-};
+    navigate(`/reservations/create/${id}`, {
+      state: {
+        roomId: activeRoomId,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+      },
+    });
+  };
 
   const mapUrl =
     property?.latitude !== null &&
@@ -626,472 +626,483 @@ export default function PropertyDetailPage() {
           </section>
         )}
 
-        {/* Property Information */}
-        <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+        {/* Main Property Content + Sidebar */}
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+          {/* Main Content */}
           <div>
-            <h2 className="text-lg font-semibold text-slate-text">
-              About this property
-            </h2>
+            {/* Property Information */}
+            <section>
+              <h2 className="text-lg font-semibold text-slate-text">
+                About this property
+              </h2>
 
-            <div className="mt-3 border-t border-slate-200 pt-4">
-              <p className="whitespace-pre-line text-sm leading-6 text-slate-muted">
-                {property.description ||
-                  "No description is available for this property."}
-              </p>
-            </div>
-
-            {/* Location */}
-            <div className="mt-8">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-slate-text">
-                  Location
-                </h2>
-
-                {googleMapsUrl && (
-                  <a
-                    href={googleMapsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs font-semibold text-midnight-indigo transition hover:underline"
-                  >
-                    Open in Google Maps
-                  </a>
-                )}
+              <div className="mt-3 border-t border-slate-200 pt-4">
+                <p className="whitespace-pre-line text-sm leading-6 text-slate-muted">
+                  {property.description ||
+                    "No description is available for this property."}
+                </p>
               </div>
 
-              <div className="mt-3 flex items-start gap-2 border-t border-slate-200 pt-4">
-                <MapPin
-                  size={17}
-                  className="mt-0.5 shrink-0 text-midnight-indigo"
-                />
+              {/* Location */}
+              <div className="mt-8">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold text-slate-text">
+                    Location
+                  </h2>
 
-                <div>
-                  <p className="text-sm font-medium text-slate-text">
-                    {property.address}
-                  </p>
-
-                  <p className="mt-1 text-sm text-slate-muted">
-                    {property.destination.city}, {property.destination.province}
-                  </p>
+                  {googleMapsUrl && (
+                    <a
+                      href={googleMapsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-semibold text-midnight-indigo transition hover:underline"
+                    >
+                      Open in Google Maps
+                    </a>
+                  )}
                 </div>
-              </div>
 
-              {mapUrl ? (
-                <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-                  <iframe
-                    title={`${property.name} location map`}
-                    src={mapUrl}
-                    className="h-[300px] w-full border-0"
-                    loading="lazy"
+                <div className="mt-3 flex items-start gap-2 border-t border-slate-200 pt-4">
+                  <MapPin
+                    size={17}
+                    className="mt-0.5 shrink-0 text-midnight-indigo"
                   />
-                </div>
-              ) : (
-                <div className="mt-4 flex min-h-[150px] items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-6 text-center">
-                  <div>
-                    <MapPin size={22} className="mx-auto text-slate-muted" />
 
-                    <p className="mt-2 text-xs font-medium text-slate-muted">
-                      Map preview unavailable
+                  <div>
+                    <p className="text-sm font-medium text-slate-text">
+                      {property.address}
                     </p>
 
-                    <p className="mt-1 text-[11px] text-slate-muted">
-                      Location coordinates are not available for this property.
+                    <p className="mt-1 text-sm text-slate-muted">
+                      {property.destination.city},{" "}
+                      {property.destination.province}
                     </p>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Property Policies */}
-          <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4">
-            <h2 className="text-base font-semibold text-slate-text">
-              Property Policies
-            </h2>
+                {mapUrl ? (
+                  <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+                    <iframe
+                      title={`${property.name} location map`}
+                      src={mapUrl}
+                      className="h-[300px] w-full border-0"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : (
+                  <div className="mt-4 flex min-h-[150px] items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-6 text-center">
+                    <div>
+                      <MapPin size={22} className="mx-auto text-slate-muted" />
 
-            <div className="mt-4 space-y-4">
-              <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-midnight-indigo">
-                  <Clock3 size={15} />
-                </div>
+                      <p className="mt-2 text-xs font-medium text-slate-muted">
+                        Map preview unavailable
+                      </p>
 
-                <div>
-                  <p className="text-xs font-semibold text-slate-text">
-                    Check-in
-                  </p>
-
-                  <p className="mt-0.5 text-xs text-slate-muted">
-                    {formatTime(property.checkInTime)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-midnight-indigo">
-                  <Clock3 size={15} />
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-slate-text">
-                    Check-out
-                  </p>
-
-                  <p className="mt-0.5 text-xs text-slate-muted">
-                    {formatTime(property.checkOutTime)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </aside>
-        </section>
-
-        {/* Available Rooms */}
-        <section id="available-rooms" className="mt-10 scroll-mt-24">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-semibold text-slate-text">
-                Available Rooms
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-muted">
-                Choose a room to view its availability and nightly pricing.
-              </p>
-            </div>
-
-            <span className="text-sm text-slate-muted">
-              {property.rooms.length}{" "}
-              {property.rooms.length === 1 ? "room" : "rooms"}
-            </span>
-          </div>
-
-          {property.rooms.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-slate-200 bg-white px-6 py-12 text-center">
-              <h3 className="text-sm font-semibold text-slate-text">
-                No rooms available
-              </h3>
-
-              <p className="mt-1 text-sm text-slate-muted">
-                This property currently has no active rooms.
-              </p>
-            </div>
-          ) : (
-            <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {property.rooms.map((room) => {
-                const isSelected = activeRoomId === room.id;
-
-                return (
-                  <article
-                    key={room.id}
-                    onClick={() => handleRoomSelect(room.id)}
-                    className={`group flex cursor-pointer flex-col rounded-xl border bg-white p-4 shadow-sm transition ${
-                      isSelected
-                        ? "border-midnight-indigo ring-2 ring-blue-100"
-                        : "border-slate-200 hover:-translate-y-0.5 hover:border-midnight-indigo hover:shadow-md"
-                    }`}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <h3 className="text-base font-semibold text-slate-text">
-                          {room.name}
-                        </h3>
-
-                        <div
-                          className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-medium ${
-                            isSelected
-                              ? "bg-blue-100 text-midnight-indigo"
-                              : "bg-blue-50 text-midnight-indigo"
-                          }`}
-                        >
-                          {isSelected ? "Selected" : "Room"}
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-muted">
-                        <Users size={13} />
-
-                        <span>
-                          Up to {room.capacity}{" "}
-                          {room.capacity === 1 ? "guest" : "guests"}
-                        </span>
-                      </div>
-
-                      <p className="mt-3 min-h-[40px] text-xs leading-5 text-slate-muted">
-                        {room.description ||
-                          "No room description is available."}
+                      <p className="mt-1 text-[11px] text-slate-muted">
+                        Location coordinates are not available for this
+                        property.
                       </p>
                     </div>
+                  </div>
+                )}
+              </div>
+            </section>
 
-                    <div className="mt-5 border-t border-slate-100 pt-4">
-                      <div className="flex items-end justify-between gap-3">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wide text-slate-muted">
-                            Starting from
-                          </p>
+            {/* Available Rooms */}
+            <section id="available-rooms" className="mt-10 scroll-mt-24">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-text">
+                  Available Rooms
+                </h2>
 
-                          <p className="mt-1 text-lg font-bold text-midnight-indigo">
-                            Rp {formatPrice(room.basePrice)}
-                            <span className="ml-1 text-[11px] font-normal text-slate-muted">
-                              /night
-                            </span>
-                          </p>
-                        </div>
+                <p className="mt-1 text-sm text-slate-muted">
+                  Choose a room to view its availability and nightly pricing.
+                </p>
 
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-
-                            handleRoomSelect(room.id);
-                          }}
-                          className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                            isSelected
-                              ? "bg-midnight-indigo text-white hover:opacity-90"
-                              : "border border-midnight-indigo text-midnight-indigo hover:bg-blue-50"
-                          }`}
-                        >
-                          {isSelected ? "Selected" : "Check Availability"}
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        {/* Availability Calendar */}
-        <section id="availability-calendar" className="mt-10 scroll-mt-24">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-text">
-              Availability Calendar
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-muted">
-              {activeRoom
-                ? `Availability and nightly price for ${activeRoom.name} for the next 30 days.`
-                : "Availability and nightly price for the selected room for the next 30 days."}
-            </p>
-          </div>
-
-          <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <button
-                type="button"
-                disabled={!canGoPrevious}
-                onClick={() =>
-                  setCalendarStart((current) => Math.max(0, current - 7))
-                }
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-outline-variant text-slate-muted transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              <div className="flex items-center gap-2">
-                <CalendarDays size={16} className="text-midnight-indigo" />
-
-                <span className="text-sm font-semibold text-slate-text">
-                  {visibleCalendar.length > 0
-                    ? `${formatCalendarDate(
-                        visibleCalendar[0].date,
-                      )} – ${formatFullDate(
-                        visibleCalendar[visibleCalendar.length - 1].date,
-                      )}`
-                    : "Availability"}
+                <span className="mt-2 inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-midnight-indigo">
+                  {property.rooms.length}{" "}
+                  {property.rooms.length === 1 ? "room" : "rooms"}
                 </span>
               </div>
 
-              <button
-                type="button"
-                disabled={!canGoNext}
-                onClick={() =>
-                  setCalendarStart((current) =>
-                    Math.min(
-                      Math.max(0, property.priceCalendar.length - 14),
-                      current + 7,
-                    ),
-                  )
-                }
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-outline-variant text-slate-muted transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-
-            {isFetching && (
-              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-muted">
-                <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-midnight-indigo" />
-                Updating room calendar...
-              </div>
-            )}
-
-            {visibleCalendar.length === 0 ? (
-              <div className="py-12 text-center">
-                <p className="text-sm text-slate-muted">
-                  No availability calendar data is available.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-                {visibleCalendar.map((item) => {
-                  const isCheckIn = checkIn === item.date;
-                  const isCheckOut = checkOut === item.date;
-
-                  const isInRange = Boolean(
-                    checkIn &&
-                    checkOut &&
-                    item.date >= checkIn &&
-                    item.date < checkOut,
-                  );
-
-                  const isSelectedDate = isCheckIn || isCheckOut;
-
-                  return (
-                    <button
-                      key={item.date}
-                      type="button"
-                      disabled={!item.available}
-                      onClick={() =>
-                        handleDateSelect(item.date, item.available)
-                      }
-                      className={`relative min-h-[105px] rounded-lg border p-3 text-left transition ${
-                        !item.available
-                          ? "cursor-not-allowed border-slate-100 bg-slate-50"
-                          : isSelectedDate
-                            ? "cursor-pointer border-midnight-indigo bg-blue-50 ring-1 ring-midnight-indigo"
-                            : isInRange
-                              ? "cursor-pointer border-blue-200 bg-blue-50"
-                              : "cursor-pointer border-slate-200 bg-white hover:border-midnight-indigo hover:bg-blue-50/50"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-medium text-slate-muted">
-                          {new Intl.DateTimeFormat("en-US", {
-                            weekday: "short",
-                          }).format(new Date(`${item.date}T00:00:00`))}
-                        </span>
-
-                        {item.available && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        )}
-                      </div>
-
-                      <p className="mt-3 text-sm font-semibold text-slate-text">
-                        {new Intl.DateTimeFormat("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        }).format(new Date(`${item.date}T00:00:00`))}
-                      </p>
-
-                      <p
-                        className={`mt-2 text-xs font-medium ${
-                          item.available
-                            ? "text-midnight-indigo"
-                            : "text-slate-muted"
-                        }`}
-                      >
-                        {item.price !== null
-                          ? `Rp ${formatPrice(item.price)}`
-                          : "Unavailable"}
-                      </p>
-
-                      <p className="mt-1 text-[10px] text-slate-muted">
-                        {isCheckIn
-                          ? "Check-in"
-                          : isCheckOut
-                            ? "Check-out"
-                            : item.available
-                              ? "Available"
-                              : "Not available"}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-[11px] text-slate-muted">
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Available
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-slate-300" />
-                Not available
-              </div>
-
-              <span>
-                Prices shown are for the selected room and include applicable
-                peak season adjustments.
-              </span>
-            </div>
-
-          </div>
-
-          {/* Booking Summary */}
-          {checkIn && checkOut && (
-            <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <h3 className="text-base font-semibold text-slate-text">
-                    Your stay
+              {property.rooms.length === 0 ? (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-white px-6 py-12 text-center">
+                  <h3 className="text-sm font-semibold text-slate-text">
+                    No rooms available
                   </h3>
 
-                  <div className="mt-2 space-y-1">
+                  <p className="mt-1 text-sm text-slate-muted">
+                    This property currently has no active rooms.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {property.rooms.map((room) => {
+                    const isSelected = activeRoomId === room.id;
+
+                    return (
+                      <article
+                        key={room.id}
+                        onClick={() => handleRoomSelect(room.id)}
+                        className={`group flex cursor-pointer flex-col rounded-xl border bg-white p-4 shadow-sm transition ${
+                          isSelected
+                            ? "border-midnight-indigo ring-2 ring-blue-100"
+                            : "border-slate-200 hover:-translate-y-0.5 hover:border-midnight-indigo hover:shadow-md"
+                        }`}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className="text-base font-semibold text-slate-text">
+                              {room.name}
+                            </h3>
+
+                            <div
+                              className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-medium ${
+                                isSelected
+                                  ? "bg-blue-100 text-midnight-indigo"
+                                  : "bg-blue-50 text-midnight-indigo"
+                              }`}
+                            >
+                              {isSelected ? "Selected" : "Room"}
+                            </div>
+                          </div>
+
+                          <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-muted">
+                            <Users size={13} />
+
+                            <span>
+                              Up to {room.capacity}{" "}
+                              {room.capacity === 1 ? "guest" : "guests"}
+                            </span>
+                          </div>
+
+                          <p className="mt-3 min-h-[40px] text-xs leading-5 text-slate-muted">
+                            {room.description ||
+                              "No room description is available."}
+                          </p>
+                        </div>
+
+                        <div className="mt-5 border-t border-slate-100 pt-4">
+                          <div className="flex items-end justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-[10px] uppercase tracking-wide text-slate-muted">
+                                Starting from
+                              </p>
+
+                              <p className="mt-1 whitespace-nowrap text-lg font-bold leading-none text-midnight-indigo">
+                                Rp {formatPrice(room.basePrice)}
+                                <span className="ml-1 text-[11px] font-normal text-slate-muted">
+                                  /night
+                                </span>
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+
+                                handleRoomSelect(room.id);
+                              }}
+                              className={`shrink-0 cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                                isSelected
+                                  ? "bg-midnight-indigo text-white hover:opacity-90"
+                                  : "border border-midnight-indigo text-midnight-indigo hover:bg-blue-50"
+                              }`}
+                            >
+                              {isSelected ? "Selected" : "Check Availability"}
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* Availability Calendar */}
+            <section id="availability-calendar" className="mt-10 scroll-mt-24">
+              <div>
+                <h2 className="text-xl font-semibold text-slate-text">
+                  Availability Calendar
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-muted">
+                  {activeRoom
+                    ? `Availability and nightly price for ${activeRoom.name} for the next 30 days.`
+                    : "Availability and nightly price for the selected room for the next 30 days."}
+                </p>
+              </div>
+
+              <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <button
+                    type="button"
+                    disabled={!canGoPrevious}
+                    onClick={() =>
+                      setCalendarStart((current) => Math.max(0, current - 7))
+                    }
+                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-outline-variant text-slate-muted transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <CalendarDays size={16} className="text-midnight-indigo" />
+
+                    <span className="text-sm font-semibold text-slate-text">
+                      {visibleCalendar.length > 0
+                        ? `${formatCalendarDate(
+                            visibleCalendar[0].date,
+                          )} – ${formatFullDate(
+                            visibleCalendar[visibleCalendar.length - 1].date,
+                          )}`
+                        : "Availability"}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={!canGoNext}
+                    onClick={() =>
+                      setCalendarStart((current) =>
+                        Math.min(
+                          Math.max(0, property.priceCalendar.length - 14),
+                          current + 7,
+                        ),
+                      )
+                    }
+                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-outline-variant text-slate-muted transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+
+                {isFetching && (
+                  <div className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-muted">
+                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-midnight-indigo" />
+                    Updating room calendar...
+                  </div>
+                )}
+
+                {visibleCalendar.length === 0 ? (
+                  <div className="py-12 text-center">
                     <p className="text-sm text-slate-muted">
-                      {checkIn} → {checkOut}
+                      No availability calendar data is available.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+                    {visibleCalendar.map((item) => {
+                      const isCheckIn = checkIn === item.date;
+                      const isCheckOut = checkOut === item.date;
+
+                      const isInRange = Boolean(
+                        checkIn &&
+                        checkOut &&
+                        item.date >= checkIn &&
+                        item.date < checkOut,
+                      );
+
+                      const isSelectedDate = isCheckIn || isCheckOut;
+
+                      return (
+                        <button
+                          key={item.date}
+                          type="button"
+                          disabled={!item.available}
+                          onClick={() =>
+                            handleDateSelect(item.date, item.available)
+                          }
+                          className={`relative min-h-[105px] rounded-lg border p-3 text-left transition ${
+                            !item.available
+                              ? "cursor-not-allowed border-slate-100 bg-slate-50"
+                              : isSelectedDate
+                                ? "cursor-pointer border-midnight-indigo bg-blue-50 ring-1 ring-midnight-indigo"
+                                : isInRange
+                                  ? "cursor-pointer border-blue-200 bg-blue-50"
+                                  : "cursor-pointer border-slate-200 bg-white hover:border-midnight-indigo hover:bg-blue-50/50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-medium text-slate-muted">
+                              {new Intl.DateTimeFormat("en-US", {
+                                weekday: "short",
+                              }).format(new Date(`${item.date}T00:00:00`))}
+                            </span>
+
+                            {item.available && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            )}
+                          </div>
+
+                          <p className="mt-3 text-sm font-semibold text-slate-text">
+                            {new Intl.DateTimeFormat("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            }).format(new Date(`${item.date}T00:00:00`))}
+                          </p>
+
+                          <p
+                            className={`mt-2 text-xs font-medium ${
+                              item.available
+                                ? "text-midnight-indigo"
+                                : "text-slate-muted"
+                            }`}
+                          >
+                            {item.price !== null
+                              ? `Rp ${formatPrice(item.price)}`
+                              : "Unavailable"}
+                          </p>
+
+                          <p className="mt-1 text-[10px] text-slate-muted">
+                            {isCheckIn
+                              ? "Check-in"
+                              : isCheckOut
+                                ? "Check-out"
+                                : item.available
+                                  ? "Available"
+                                  : "Not available"}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-[11px] text-slate-muted">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                    Available
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-slate-300" />
+                    Not available
+                  </div>
+
+                  <span>
+                    Prices shown are for the selected room and include
+                    applicable peak season adjustments.
+                  </span>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* Sidebar */}
+          <aside className="self-start lg:sticky lg:top-24">
+            {/* Property Policies */}
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <h2 className="text-base font-semibold text-slate-text">
+                Property Policies
+              </h2>
+
+              <div className="mt-4 space-y-4">
+                <div className="flex gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-midnight-indigo">
+                    <Clock3 size={15} />
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-slate-text">
+                      Check-in
                     </p>
 
-                    <p className="text-xs text-slate-muted">
-                      {activeRoom?.name ?? "Selected room"} · {numberOfNights}{" "}
-                      {numberOfNights === 1 ? "night" : "nights"}
+                    <p className="mt-0.5 text-xs text-slate-muted">
+                      {formatTime(property.checkInTime)}
                     </p>
-
-                    {!isSelectedStayAvailable && (
-                      <p className="pt-1 text-xs font-medium text-red-500">
-                        Some dates in your selected stay are unavailable. Please
-                        choose another date range.
-                      </p>
-                    )}
-
-                    {dateSelectionError && (
-                      <p className="pt-1 text-xs font-medium text-red-500">
-                        {dateSelectionError}
-                      </p>
-                    )}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:min-w-[420px] lg:justify-end">
-                  <div className="sm:text-right">
+                <div className="flex gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-midnight-indigo">
+                    <Clock3 size={15} />
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-slate-text">
+                      Check-out
+                    </p>
+
+                    <p className="mt-0.5 text-xs text-slate-muted">
+                      {formatTime(property.checkOutTime)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Booking Summary */}
+            {checkIn && checkOut && (
+              <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h3 className="text-base font-semibold text-slate-text">
+                  Your Stay
+                </h3>
+
+                <div className="mt-3 space-y-2">
+                  <div>
                     <p className="text-[10px] uppercase tracking-wide text-slate-muted">
-                      Estimated total
+                      Stay dates
                     </p>
 
-                    <p className="mt-1 text-xl font-bold text-midnight-indigo">
-                      Rp {formatPrice(estimatedTotal)}
+                    <p className="mt-1 text-sm font-medium text-slate-text">
+                      {checkIn} → {checkOut}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-slate-muted">
+                      Room
                     </p>
 
-                    <p className="mt-0.5 text-[11px] text-slate-muted">
-                      {numberOfNights}{" "}
+                    <p className="mt-1 text-xs text-slate-muted">
+                      {activeRoom?.name ?? "Selected room"} · {numberOfNights}{" "}
                       {numberOfNights === 1 ? "night" : "nights"}
                     </p>
                   </div>
+
+                  {!isSelectedStayAvailable && (
+                    <p className="pt-1 text-xs font-medium text-red-500">
+                      Some dates in your selected stay are unavailable. Please
+                      choose another date range.
+                    </p>
+                  )}
+
+                  {dateSelectionError && (
+                    <p className="pt-1 text-xs font-medium text-red-500">
+                      {dateSelectionError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-5 border-t border-slate-100 pt-4">
+                  <p className="text-[10px] uppercase tracking-wide text-slate-muted">
+                    Estimated total
+                  </p>
+
+                  <p className="mt-1 whitespace-nowrap text-xl font-bold text-midnight-indigo">
+                    Rp {formatPrice(estimatedTotal)}
+                  </p>
+
+                  <p className="mt-0.5 text-[11px] text-slate-muted">
+                    {numberOfNights} {numberOfNights === 1 ? "night" : "nights"}
+                  </p>
 
                   <button
                     type="button"
                     disabled={!activeRoomId || !isSelectedStayAvailable}
                     onClick={handleReserveNow}
-                    className="cursor-pointer rounded-lg bg-midnight-indigo px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-4 w-full cursor-pointer rounded-lg bg-midnight-indigo px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Reserve Now
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </section>
+            )}
+          </aside>
+        </div>
       </main>
     </div>
   );

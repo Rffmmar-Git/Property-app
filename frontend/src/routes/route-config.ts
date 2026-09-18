@@ -39,6 +39,7 @@ export const ROUTES = {
   HOME: "/",
   UNAUTHORIZED: "/unauthorized",
   LOGIN: "/login",
+  TENANT_LOGIN: "/tenant/login",
   REGISTER: "/register",
   REGISTER_TENANT: "/register/tenant",
   CHECK_EMAIL: "/check-email",

@@ -2,13 +2,18 @@ import {
   AlertTriangle,
   Building2,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Globe,
   Pencil,
   Plus,
   Save,
+  Send,
   Trash2,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import PageHeader from "@/components/layout/PageHeader";
@@ -22,26 +27,62 @@ import { useTenantProperties } from "@/features/property/hooks/useTenantProperti
 import { useCreateTenantProperty } from "@/features/property/hooks/useCreateTenantProperty";
 import { useUpdateTenantProperty } from "@/features/property/hooks/useUpdateTenantProperty";
 import { useDeleteTenantProperty } from "@/features/property/hooks/useDeleteTenantProperty";
+import { usePublishTenantProperty } from "@/features/property/hooks/usePublishTenantProperty";
 import { useTenantProperty } from "@/features/property/hooks/useTenantProperty";
 import { usePropertyCategories } from "@/features/property/hooks/usePropertyCategories";
 import { useDestinations } from "@/features/property/hooks/useDestinations";
 
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 500;
+
+type TenantSortBy = "created_at" | "name";
+type SortOrder = "asc" | "desc";
+
+interface TenantPropertyRoom {
+  id: string;
+  room_name: string;
+  total_rooms: number;
+}
+
+interface TenantPropertyWithRooms {
+  id: string;
+  name: string;
+  status: "DRAFT" | "PUBLISHED";
+  property_categories?: {
+    id: string;
+    name: string;
+  } | null;
+  destinations?: {
+    id: string;
+    city: string;
+  } | null;
+  rooms?: TenantPropertyRoom[];
+}
+
 export default function TenantPropertyPage() {
+  const navigate = useNavigate();
+
   const [showForm, setShowForm] = useState(false);
   const [editingPropertyId, setEditingPropertyId] = useState<string | null>(
     null,
   );
+
   const [deletingProperty, setDeletingProperty] = useState<{
     id: string;
     name: string;
   } | null>(null);
+
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [destinationId, setDestinationId] = useState("");
   const [description, setDescription] = useState("");
+
+  const [locationSearch, setLocationSearch] = useState("");
   const [address, setAddress] = useState("");
+
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [checkInTime, setCheckInTime] = useState("");
@@ -49,28 +90,64 @@ export default function TenantPropertyPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
 
-  const propertiesQuery = useTenantProperties();
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [sortBy, setSortBy] = useState<TenantSortBy>("created_at");
+  const [order, setOrder] = useState<SortOrder>("desc");
+  const [page, setPage] = useState(1);
+
+  const propertiesQuery = useTenantProperties({
+    page,
+    pageSize: PAGE_SIZE,
+    search: search || undefined,
+    category: filterCategory || undefined,
+    sortBy,
+    order,
+  });
+
   const categoriesQuery = usePropertyCategories();
   const destinationsQuery = useDestinations();
 
   const createMutation = useCreateTenantProperty();
   const updateMutation = useUpdateTenantProperty();
   const deleteMutation = useDeleteTenantProperty();
+  const publishMutation = usePublishTenantProperty();
 
   const propertyDetailQuery = useTenantProperty(editingPropertyId);
 
-  const properties = propertiesQuery.data ?? [];
+  const properties = (propertiesQuery.data?.items ??
+    []) as TenantPropertyWithRooms[];
+
+  const pagination = propertiesQuery.data?.pagination;
+
   const categories = categoriesQuery.data ?? [];
   const destinations = destinationsQuery.data ?? [];
 
+  const hasDraftProperties = properties.some(
+    (property) => property.status === "DRAFT",
+  );
+
   const isEditMode = Boolean(editingPropertyId);
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [searchInput]);
 
   const resetForm = () => {
     setName("");
     setCategoryId("");
     setDestinationId("");
     setDescription("");
+    setLocationSearch("");
     setAddress("");
     setLatitude("");
     setLongitude("");
@@ -92,9 +169,7 @@ export default function TenantPropertyPage() {
   };
 
   const handleEditProperty = (propertyId: string) => {
-    resetForm();
-    setEditingPropertyId(propertyId);
-    setShowForm(true);
+    navigate(`/tenant/properties/${propertyId}/edit`);
   };
 
   const handleOpenDeleteConfirmation = (
@@ -127,6 +202,10 @@ export default function TenantPropertyPage() {
     try {
       await deleteMutation.mutateAsync(deletingProperty.id);
       setDeletingProperty(null);
+
+      if (properties.length === 1 && page > 1) {
+        setPage((currentPage) => currentPage - 1);
+      }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setDeleteError(
@@ -139,6 +218,82 @@ export default function TenantPropertyPage() {
     }
   };
 
+  const handlePublishProperty = async (propertyId: string) => {
+    setPublishError(null);
+
+    try {
+      await publishMutation.mutateAsync(propertyId);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setPublishError(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to publish property.",
+        );
+        return;
+      }
+
+      if (error instanceof Error) {
+        setPublishError(error.message);
+        return;
+      }
+
+      setPublishError("Failed to publish property.");
+    }
+  };
+
+  const handleCategoryFilterChange = (value: string) => {
+    setFilterCategory(value);
+    setPage(1);
+  };
+
+  const handleSortChange = (value: string) => {
+    if (value === "newest") {
+      setSortBy("created_at");
+      setOrder("desc");
+      setPage(1);
+      return;
+    }
+
+    if (value === "oldest") {
+      setSortBy("created_at");
+      setOrder("asc");
+      setPage(1);
+      return;
+    }
+
+    if (value === "name-asc") {
+      setSortBy("name");
+      setOrder("asc");
+      setPage(1);
+      return;
+    }
+
+    if (value === "name-desc") {
+      setSortBy("name");
+      setOrder("desc");
+      setPage(1);
+    }
+  };
+
+  const currentSort =
+    sortBy === "created_at"
+      ? order === "desc"
+        ? "newest"
+        : "oldest"
+      : order === "asc"
+        ? "name-asc"
+        : "name-desc";
+
+  const totalPages = pagination?.totalPages ?? 0;
+  const totalItems = pagination?.totalItems ?? 0;
+
+  useEffect(() => {
+    if (totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
   useEffect(() => {
     if (!isEditMode || !propertyDetailQuery.data) {
       return;
@@ -150,7 +305,10 @@ export default function TenantPropertyPage() {
     setCategoryId(property.category_id);
     setDestinationId(property.destination_id);
     setDescription(property.description ?? "");
+
+    setLocationSearch("");
     setAddress(property.address);
+
     setLatitude(property.latitude?.toString() ?? "");
     setLongitude(property.longitude?.toString() ?? "");
 
@@ -164,8 +322,8 @@ export default function TenantPropertyPage() {
   }, [isEditMode, propertyDetailQuery.data]);
 
   const handleFindLocation = async () => {
-    if (address.trim().length < 5) {
-      setErrorMessage("Please enter a valid address first.");
+    if (locationSearch.trim().length < 5) {
+      setErrorMessage("Please enter a valid location search.");
       return;
     }
 
@@ -173,13 +331,13 @@ export default function TenantPropertyPage() {
     setIsGeocoding(true);
 
     try {
-      const result = await geocodeAddress(address);
+      const result = await geocodeAddress(locationSearch);
 
       if (!result) {
         setLatitude("");
         setLongitude("");
         setErrorMessage(
-          "Address not found. Please try a more specific address.",
+          "Location not found. Please try a different location search.",
         );
         return;
       }
@@ -189,7 +347,7 @@ export default function TenantPropertyPage() {
     } catch {
       setLatitude("");
       setLongitude("");
-      setErrorMessage("Failed to find the address. Please try again.");
+      setErrorMessage("Failed to find the location. Please try again.");
     } finally {
       setIsGeocoding(false);
     }
@@ -214,12 +372,11 @@ export default function TenantPropertyPage() {
     }
 
     if (address.trim().length < 5) {
-      setErrorMessage("Address must be at least 5 characters.");
+      setErrorMessage("Property address must be at least 5 characters.");
       return;
     }
 
     const latitudeValue = latitude ? Number(latitude) : undefined;
-
     const longitudeValue = longitude ? Number(longitude) : undefined;
 
     if (
@@ -299,7 +456,7 @@ export default function TenantPropertyPage() {
             </h2>
 
             <p className="mt-1 text-xs text-slate-muted">
-              {properties.length} properties available
+              {totalItems} properties available
             </p>
           </div>
 
@@ -314,6 +471,130 @@ export default function TenantPropertyPage() {
             </button>
           )}
         </div>
+
+        {hasDraftProperties && (
+          <div className="rounded-md border border-blue-100 bg-blue-50 px-4 py-3">
+            <div className="flex items-start gap-3">
+              <CheckCircle2
+                size={16}
+                className="mt-0.5 shrink-0 text-blue-600"
+              />
+
+              <div>
+                <p className="text-xs font-semibold text-blue-800">
+                  Complete your property setup before publishing
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-blue-700">
+                  New properties are saved as drafts. Click Edit to add the
+                  required property images and room types before publishing.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {publishError && !showForm && (
+          <div className="rounded-md border border-red-100 bg-red-50 px-4 py-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle
+                size={15}
+                className="mt-0.5 shrink-0 text-red-600"
+              />
+
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-red-600">
+                  {publishError}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPublishError(null)}
+                className="cursor-pointer text-red-400 transition hover:text-red-600"
+                title="Dismiss"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!showForm && (
+          <SurfaceCard>
+            <div className="grid gap-3 p-5 md:grid-cols-[minmax(0,1fr)_220px_220px]">
+              <div>
+                <label
+                  htmlFor="tenant-property-search"
+                  className="mb-2 block text-xs font-semibold text-midnight-indigo"
+                >
+                  Search
+                </label>
+
+                <input
+                  id="tenant-property-search"
+                  type="text"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Search property name or city..."
+                  className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="tenant-property-category"
+                  className="mb-2 block text-xs font-semibold text-midnight-indigo"
+                >
+                  Category
+                </label>
+
+                <select
+                  id="tenant-property-category"
+                  value={filterCategory}
+                  onChange={(event) =>
+                    handleCategoryFilterChange(event.target.value)
+                  }
+                  disabled={categoriesQuery.isLoading}
+                  className="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10 disabled:cursor-not-allowed disabled:bg-slate-50"
+                >
+                  <option value="">
+                    {categoriesQuery.isLoading
+                      ? "Loading categories..."
+                      : "All categories"}
+                  </option>
+
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="tenant-property-sort"
+                  className="mb-2 block text-xs font-semibold text-midnight-indigo"
+                >
+                  Sort
+                </label>
+
+                <select
+                  id="tenant-property-sort"
+                  value={currentSort}
+                  onChange={(event) => handleSortChange(event.target.value)}
+                  className="w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="name-asc">Name A–Z</option>
+                  <option value="name-desc">Name Z–A</option>
+                </select>
+              </div>
+            </div>
+          </SurfaceCard>
+        )}
 
         {showForm && (
           <SurfaceCard>
@@ -449,10 +730,51 @@ export default function TenantPropertyPage() {
 
                   <div>
                     <label
+                      htmlFor="property-location-search"
+                      className="mb-2 block text-xs font-semibold text-midnight-indigo"
+                    >
+                      Location Search
+                    </label>
+
+                    <div className="flex gap-2">
+                      <input
+                        id="property-location-search"
+                        type="text"
+                        value={locationSearch}
+                        onChange={(event) => {
+                          setLocationSearch(event.target.value);
+                          setLatitude("");
+                          setLongitude("");
+                          setErrorMessage(null);
+                        }}
+                        placeholder="e.g. Sudirman area, Jakarta"
+                        className="min-w-0 flex-1 rounded-md border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={handleFindLocation}
+                        disabled={
+                          isGeocoding || locationSearch.trim().length < 5
+                        }
+                        className="shrink-0 cursor-pointer rounded-md border border-slate-200 px-4 py-2 text-xs font-semibold text-midnight-indigo transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isGeocoding ? "Finding..." : "Find Location"}
+                      </button>
+                    </div>
+
+                    <p className="mt-1 text-xs text-slate-muted">
+                      Use a searchable place name or location to find the map
+                      position.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label
                       htmlFor="property-address"
                       className="mb-2 block text-xs font-semibold text-midnight-indigo"
                     >
-                      Address
+                      Property Address
                     </label>
 
                     <input
@@ -461,35 +783,29 @@ export default function TenantPropertyPage() {
                       value={address}
                       onChange={(event) => {
                         setAddress(event.target.value);
-                        setLatitude("");
-                        setLongitude("");
                         setErrorMessage(null);
                       }}
-                      placeholder="Property address"
+                      placeholder="e.g. Jl. Sudirman No. 123, Jakarta"
+                      maxLength={255}
                       className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-midnight-indigo focus:ring-2 focus:ring-midnight-indigo/10"
                     />
+
+                    <p className="mt-1 text-xs text-slate-muted">
+                      Enter the property's actual address. This address is
+                      stored separately from the location search.
+                    </p>
                   </div>
 
                   <div className="md:col-span-2">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-xs font-semibold text-midnight-indigo">
-                          Location
-                        </p>
+                    <div>
+                      <p className="text-xs font-semibold text-midnight-indigo">
+                        Location
+                      </p>
 
-                        <p className="mt-1 text-xs text-slate-muted">
-                          Find the property location from the address.
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleFindLocation}
-                        disabled={isGeocoding || address.trim().length < 5}
-                        className="cursor-pointer rounded-md border border-slate-200 px-4 py-2 text-xs font-semibold text-midnight-indigo transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {isGeocoding ? "Finding..." : "Find Location"}
-                      </button>
+                      <p className="mt-1 text-xs text-slate-muted">
+                        Find the property location using the Location Search
+                        field above.
+                      </p>
                     </div>
 
                     {latitude && longitude && (
@@ -672,11 +988,15 @@ export default function TenantPropertyPage() {
                 <Building2 size={28} className="mx-auto text-slate-300" />
 
                 <p className="mt-3 text-sm font-medium text-midnight-indigo">
-                  No properties yet
+                  {search || filterCategory
+                    ? "No matching properties"
+                    : "No properties yet"}
                 </p>
 
                 <p className="mt-1 text-xs text-slate-muted">
-                  Add your first property to get started.
+                  {search || filterCategory
+                    ? "Try changing your search or filter."
+                    : "Add your first property to get started."}
                 </p>
               </div>
             )}
@@ -684,57 +1004,225 @@ export default function TenantPropertyPage() {
           {!propertiesQuery.isLoading &&
             !propertiesQuery.isError &&
             properties.length > 0 && (
-              <div className="divide-y divide-slate-100">
-                {properties.map((property) => (
-                  <div
-                    key={property.id}
-                    className="flex items-center justify-between gap-4 px-5 py-4"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-midnight-indigo/10 text-midnight-indigo">
-                        <Building2 size={18} />
-                      </div>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[920px] border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 bg-slate-50">
+                        <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-muted">
+                          Property
+                        </th>
 
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-midnight-indigo">
-                          {property.name}
-                        </p>
+                        <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-muted">
+                          Location
+                        </th>
 
-                        <p className="mt-0.5 text-xs text-slate-muted">
-                          Property ID: {property.id}
-                        </p>
-                      </div>
+                        <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-muted">
+                          Category
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-muted">
+                          Room Types
+                        </th>
+
+                        <th className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-muted">
+                          Status
+                        </th>
+
+                        <th className="px-5 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-muted">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-slate-100">
+                      {properties.map((property) => {
+                        const rooms = property.rooms ?? [];
+
+                        return (
+                          <tr
+                            key={property.id}
+                            className="transition hover:bg-slate-50/70"
+                          >
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-midnight-indigo/10 text-midnight-indigo">
+                                  <Building2 size={17} />
+                                </div>
+
+                                <div className="min-w-0">
+                                  <p className="max-w-[190px] truncate text-sm font-semibold text-midnight-indigo">
+                                    {property.name}
+                                  </p>
+
+                                  <p className="mt-0.5 text-[11px] text-slate-muted">
+                                    ID: {property.id}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="px-5 py-4">
+                              <p className="text-sm text-slate-700">
+                                {property.destinations?.city || "—"}
+                              </p>
+                            </td>
+
+                            <td className="px-5 py-4">
+                              <p className="text-sm text-slate-700">
+                                {property.property_categories?.name || "—"}
+                              </p>
+                            </td>
+
+                            <td className="px-5 py-4">
+                              {rooms.length === 0 ? (
+                                <p className="text-xs text-slate-muted">
+                                  No rooms yet
+                                </p>
+                              ) : (
+                                <div className="max-w-[250px] space-y-1.5">
+                                  {rooms.map((room) => (
+                                    <div
+                                      key={room.id}
+                                      className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-2.5 py-1.5"
+                                    >
+                                      <span className="min-w-0 truncate text-xs text-slate-700">
+                                        {room.room_name}
+                                      </span>
+
+                                      <span className="shrink-0 text-[11px] font-semibold text-midnight-indigo">
+                                        {room.total_rooms}{" "}
+                                        {room.total_rooms === 1
+                                          ? "room"
+                                          : "rooms"}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
+
+                            <td className="px-5 py-4">
+                              {property.status === "PUBLISHED" ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">
+                                  <Globe size={11} />
+                                  Published
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700">
+                                  <Pencil size={11} />
+                                  Draft
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="px-5 py-4">
+                              {!showForm && (
+                                <div className="flex justify-end gap-2">
+                                  {property.status === "DRAFT" && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handlePublishProperty(property.id)
+                                      }
+                                      disabled={publishMutation.isPending}
+                                      className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-emerald-200 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      <Send size={14} />
+
+                                      {publishMutation.isPending &&
+                                      publishMutation.variables === property.id
+                                        ? "Publishing..."
+                                        : "Publish"}
+                                    </button>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleEditProperty(property.id)
+                                    }
+                                    className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-midnight-indigo transition hover:bg-slate-50"
+                                  >
+                                    <Pencil size={14} />
+                                    Edit
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleOpenDeleteConfirmation(
+                                        property.id,
+                                        property.name,
+                                      )
+                                    }
+                                    className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                                  >
+                                    <Trash2 size={14} />
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {pagination && totalPages > 0 && (
+                  <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-slate-muted">
+                      Showing{" "}
+                      <span className="font-semibold text-slate-700">
+                        {(page - 1) * PAGE_SIZE + 1}
+                      </span>
+                      {"–"}
+                      <span className="font-semibold text-slate-700">
+                        {Math.min(page * PAGE_SIZE, totalItems)}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-semibold text-slate-700">
+                        {totalItems}
+                      </span>{" "}
+                      properties
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPage((currentPage) => currentPage - 1)
+                        }
+                        disabled={page <= 1 || propertiesQuery.isFetching}
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft size={14} />
+                        Previous
+                      </button>
+
+                      <span className="px-2 text-xs font-semibold text-midnight-indigo">
+                        Page {page} of {totalPages}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPage((currentPage) => currentPage + 1)
+                        }
+                        disabled={
+                          page >= totalPages || propertiesQuery.isFetching
+                        }
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Next
+                        <ChevronRight size={14} />
+                      </button>
                     </div>
-
-                    {!showForm && (
-                      <div className="flex shrink-0 items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEditProperty(property.id)}
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-midnight-indigo transition hover:bg-slate-50"
-                        >
-                          <Pencil size={14} />
-                          Edit
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleOpenDeleteConfirmation(
-                              property.id,
-                              property.name,
-                            )
-                          }
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                        >
-                          <Trash2 size={14} />
-                          Delete
-                        </button>
-                      </div>
-                    )}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
         </SurfaceCard>
       </div>

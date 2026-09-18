@@ -7,6 +7,8 @@ import {
   UpdatePropertyInput,
 } from "../validations/property";
 
+import type { PropertyQueryDto } from "../types/dto/property/property-query.dto";
+
 import {
   ApiResponse,
   asyncHandler,
@@ -14,105 +16,174 @@ import {
 } from "../utils/core";
 
 export class TenantPropertyController {
-  createProperty = asyncHandler(async (req: Request, res: Response) => {
-    const tenantId = BigInt(req.user!.id);
-    const data = req.body as CreatePropertyInput;
+  createProperty = asyncHandler(
+    async (req: Request, res: Response) => {
+      const tenantId = BigInt(req.user!.id);
+      const data = req.body as CreatePropertyInput;
 
-    const property = await tenantPropertyService.createProperty(
-      tenantId,
-      data,
-    );
+      const property =
+        await tenantPropertyService.createProperty(
+          tenantId,
+          data,
+        );
 
-    return res.status(201).json(
-      new ApiResponse(
-        true,
-        "Property created successfully",
-        serializeBigInt(property),
-      ),
-    );
-  });
+      return res.status(201).json(
+        new ApiResponse(
+          true,
+          "Property created successfully",
+          serializeBigInt(property),
+        ),
+      );
+    },
+  );
 
-  getMyProperties = asyncHandler(async (req: Request, res: Response) => {
-    const tenantId = BigInt(req.user!.id);
+  getMyProperties = asyncHandler(
+    async (req: Request, res: Response) => {
+      const tenantId = BigInt(req.user!.id);
 
-    const properties = await tenantPropertyService.getMyProperties(
-      tenantId,
-    );
+      const query: PropertyQueryDto = {
+        page: req.query.page
+          ? Number(req.query.page)
+          : undefined,
 
-    return res.status(200).json(
-      new ApiResponse(
-        true,
-        "Tenant properties retrieved successfully",
-        serializeBigInt(properties),
-      ),
-    );
-  });
+        pageSize: req.query.pageSize
+          ? Number(req.query.pageSize)
+          : undefined,
 
-  getMyProperty = asyncHandler(async (req: Request, res: Response) => {
-    const tenantId = BigInt(req.user!.id);
+        search:
+          typeof req.query.search === "string"
+            ? req.query.search
+            : undefined,
 
-    const propertyId = Array.isArray(req.params.id)
-      ? req.params.id[0]
-      : req.params.id;
+        category:
+          typeof req.query.category === "string"
+            ? req.query.category
+            : undefined,
 
-    const property = await tenantPropertyService.getMyProperty(
-      tenantId,
-      propertyId,
-    );
+        sortBy:
+          typeof req.query.sortBy === "string"
+            ? (req.query.sortBy as PropertyQueryDto["sortBy"])
+            : undefined,
 
-    return res.status(200).json(
-      new ApiResponse(
-        true,
-        "Tenant property retrieved successfully",
-        serializeBigInt(property),
-      ),
-    );
-  });
+        order:
+          typeof req.query.order === "string"
+            ? (req.query.order as PropertyQueryDto["order"])
+            : undefined,
+      };
 
-  updateProperty = asyncHandler(async (req: Request, res: Response) => {
-    const tenantId = BigInt(req.user!.id);
+      const result =
+        await tenantPropertyService.getMyProperties(
+          tenantId,
+          query,
+        );
 
-    const propertyId = Array.isArray(req.params.id)
-      ? req.params.id[0]
-      : req.params.id;
+      return res.status(200).json(
+        new ApiResponse(
+          true,
+          "Tenant properties retrieved successfully",
+          serializeBigInt(result),
+        ),
+      );
+    },
+  );
 
-    const data = req.body as UpdatePropertyInput;
+  getMyProperty = asyncHandler(
+    async (req: Request, res: Response) => {
+      const tenantId = BigInt(req.user!.id);
 
-    const property = await tenantPropertyService.updateProperty(
-      tenantId,
-      propertyId,
-      data,
-    );
+      const propertyId = Array.isArray(req.params.id)
+        ? req.params.id[0]
+        : req.params.id;
 
-    return res.status(200).json(
-      new ApiResponse(
-        true,
-        "Property updated successfully",
-        serializeBigInt(property),
-      ),
-    );
-  });
+      const property =
+        await tenantPropertyService.getMyProperty(
+          tenantId,
+          propertyId,
+        );
 
-  deleteProperty = asyncHandler(async (req: Request, res: Response) => {
-    const tenantId = BigInt(req.user!.id);
+      return res.status(200).json(
+        new ApiResponse(
+          true,
+          "Tenant property retrieved successfully",
+          serializeBigInt(property),
+        ),
+      );
+    },
+  );
 
-    const propertyId = Array.isArray(req.params.id)
-      ? req.params.id[0]
-      : req.params.id;
+  updateProperty = asyncHandler(
+    async (req: Request, res: Response) => {
+      const tenantId = BigInt(req.user!.id);
 
-    await tenantPropertyService.deleteProperty(
-      tenantId,
-      propertyId,
-    );
+      const propertyId = Array.isArray(req.params.id)
+        ? req.params.id[0]
+        : req.params.id;
 
-    return res.status(200).json(
-      new ApiResponse(
-        true,
-        "Property deleted successfully",
-        null,
-      ),
-    );
-  });
+      const data = req.body as UpdatePropertyInput;
+
+      const property =
+        await tenantPropertyService.updateProperty(
+          tenantId,
+          propertyId,
+          data,
+        );
+
+      return res.status(200).json(
+        new ApiResponse(
+          true,
+          "Property updated successfully",
+          serializeBigInt(property),
+        ),
+      );
+    },
+  );
+
+  deleteProperty = asyncHandler(
+    async (req: Request, res: Response) => {
+      const tenantId = BigInt(req.user!.id);
+
+      const propertyId = Array.isArray(req.params.id)
+        ? req.params.id[0]
+        : req.params.id;
+
+      await tenantPropertyService.deleteProperty(
+        tenantId,
+        propertyId,
+      );
+
+      return res.status(200).json(
+        new ApiResponse(
+          true,
+          "Property deleted successfully",
+          null,
+        ),
+      );
+    },
+  );
+
+  publishProperty = asyncHandler(
+    async (req: Request, res: Response) => {
+      const tenantId = BigInt(req.user!.id);
+
+      const propertyId = Array.isArray(req.params.id)
+        ? req.params.id[0]
+        : req.params.id;
+
+      const property =
+        await tenantPropertyService.publishProperty(
+          tenantId,
+          propertyId,
+        );
+
+      return res.status(200).json(
+        new ApiResponse(
+          true,
+          "Property published successfully",
+          serializeBigInt(property),
+        ),
+      );
+    },
+  );
 }
 
 export const tenantPropertyController =
